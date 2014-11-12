@@ -21,17 +21,26 @@ type MatchRequest struct {
 }
 
 type Participant struct {
-	Id             int64  `db:"id"`
-	MatchId        string `db:"match_id"`
-	MatchRequestId string `db:"match_request_id"`
-	PlayerId       string `db:"player_id"`
-	OpponentId     string `db:"opponent_id"`
+	Id               int64  `db:"id"`
+	MatchId          string `db:"match_id"`
+	MatchRequestUuid string `db:"match_request_uuid"`
+	PlayerId         string `db:"player_id"`
+	OpponentId       string `db:"opponent_id"`
 }
 
 type Match struct {
 	Id              string `json:"id"`
 	MatchRequest1Id string `json:"match_request_1_id"`
 	MatchRequest2Id string `json:"match_request_2_id"`
+}
+
+type Result struct {
+	Id                   int64  `json:"-" db:"id"`
+	MatchId              string `json:"match_id" db:"match_id"`
+	Winner               string `json:"winner" db:"winner"`
+	Loser                string `json:"loser" db:"loser"`
+	WinningParticipantId int64  `db:"winning_participant_id"`
+	LosingParticipantId  int64  `db:"losing_participant_id"`
 }
 
 func main() {
@@ -80,7 +89,10 @@ func main() {
 				matchId, err := dbmap.SelectStr(
 					`SELECT match_id
 					FROM participants
-					WHERE match_request_id = ?`,
+					WHERE match_request_uuid = ?
+					AND match_id NOT IN (
+						SELECT match_id FROM results
+					)`,
 					uuid,
 				)
 				if err == nil && matchId != "" {
@@ -103,6 +115,10 @@ func main() {
 		urlParts := strings.Split(r.URL.Path, "/")
 		matchId := urlParts[len(urlParts)-1]
 
+		if matchId == "" {
+			log.Fatal("No match ID given!")
+		}
+
 		var participants []Participant
 		_, err := dbmap.Select(
 			&participants,
@@ -115,14 +131,51 @@ func main() {
 
 		match := Match{
 			Id:              matchId,
-			MatchRequest1Id: participants[0].MatchRequestId,
-			MatchRequest2Id: participants[1].MatchRequestId,
+			MatchRequest1Id: participants[0].MatchRequestUuid,
+			MatchRequest2Id: participants[1].MatchRequestUuid,
 		}
 
 		js, err := json.Marshal(match)
 
 		w.WriteHeader(200)
 		w.Write(js)
+	})
+
+	http.HandleFunc("/results", func(w http.ResponseWriter, r *http.Request) {
+		var result Result
+
+		decoder := json.NewDecoder(r.Body)
+
+		err := decoder.Decode(&result)
+		checkErr(err, "Decoding JSON failed")
+
+		winningParticipantId, err := dbmap.SelectInt(
+			`SELECT id
+			FROM participants
+			WHERE match_id = :match_id
+			AND player_id = :player_id`,
+			map[string]interface{}{
+				"match_id":  result.MatchId,
+				"player_id": result.Winner,
+			},
+		)
+		result.WinningParticipantId = winningParticipantId
+
+		losingParticipantId, err := dbmap.SelectInt(
+			`SELECT id
+			FROM participants
+			WHERE match_id = :match_id
+			AND player_id = :player_id`,
+			map[string]interface{}{
+				"match_id":  result.MatchId,
+				"player_id": result.Loser,
+			},
+		)
+		result.LosingParticipantId = losingParticipantId
+
+		dbmap.Insert(&result)
+
+		w.WriteHeader(201)
 	})
 
 	http.ListenAndServe(":3000", nil)
@@ -135,11 +188,14 @@ func suitableOpponentMatchRequests(dbmap *gorp.DbMap, requesterId string) []Matc
 		`SELECT *
 		FROM match_requests
 		WHERE requester_id <> :requester_id
-		AND id NOT IN (
-			SELECT match_request_id
+		AND uuid NOT IN (
+			SELECT match_request_uuid
 			FROM participants 
-			WHERE opponent_id = :requester_id
-			OR player_id = :requester_id
+		)
+		AND requester_id NOT IN (
+			SELECT opponent_id
+			FROM participants
+			WHERE player_id = :requester_id
 		)
 		LIMIT 1`,
 		map[string]interface{}{"requester_id": requesterId},
@@ -156,18 +212,19 @@ func recordMatch(dbmap *gorp.DbMap, openMatchRequest MatchRequest, newMatchReque
 	matchId := fmt.Sprintf("%v", matchIdUuid)
 
 	participant1 := Participant{
-		MatchId:        matchId,
-		MatchRequestId: openMatchRequest.Uuid,
-		PlayerId:       openMatchRequest.RequesterId,
-		OpponentId:     newMatchRequest.RequesterId,
+		MatchId:          matchId,
+		MatchRequestUuid: openMatchRequest.Uuid,
+		PlayerId:         openMatchRequest.RequesterId,
+		OpponentId:       newMatchRequest.RequesterId,
 	}
 	participant2 := Participant{
-		MatchId:        matchId,
-		MatchRequestId: newMatchRequest.Uuid,
-		PlayerId:       newMatchRequest.RequesterId,
-		OpponentId:     openMatchRequest.RequesterId,
+		MatchId:          matchId,
+		MatchRequestUuid: newMatchRequest.Uuid,
+		PlayerId:         newMatchRequest.RequesterId,
+		OpponentId:       openMatchRequest.RequesterId,
 	}
-	dbmap.Insert(&participant1, &participant2)
+	err = dbmap.Insert(&participant1, &participant2)
+	checkErr(err, "Couldn't insert participants")
 }
 
 func initDb() *gorp.DbMap {
@@ -176,7 +233,9 @@ func initDb() *gorp.DbMap {
 
 	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{"InnoDB", "UTF8"}}
 	dbmap.AddTableWithName(MatchRequest{}, "match_requests").SetKeys(true, "Id")
-	dbmap.AddTableWithName(Participant{}, "participants").SetKeys(true, "Id")
+	participants := dbmap.AddTableWithName(Participant{}, "participants").SetKeys(true, "Id")
+	participants.ColMap("match_request_uuid").SetUnique(true)
+	dbmap.AddTableWithName(Result{}, "results").SetKeys(true, "Id")
 
 	err = dbmap.CreateTablesIfNotExists()
 	checkErr(err, "Create tables failed")
