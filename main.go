@@ -29,9 +29,9 @@ type Participant struct {
 }
 
 type Match struct {
-	Id              string
-	MatchRequest1Id string
-	MatchRequest2Id string
+	Id              string `json:"id"`
+	MatchRequest1Id string `json:"match_request_1_id"`
+	MatchRequest2Id string `json:"match_request_2_id"`
 }
 
 func main() {
@@ -59,14 +59,11 @@ func main() {
 
 			matchRequest.Uuid = uuid
 
-			fmt.Printf("decoded from PUT: %+v\n", matchRequest)
-
 			err = dbmap.Insert(&matchRequest)
 			checkErr(err, "Creation of MatchRequest failed")
 
 			openMatchRequests := suitableOpponentMatchRequests(dbmap, matchRequest.RequesterId)
 			if len(openMatchRequests) > 0 {
-				fmt.Printf("Found open match request: %v\n", openMatchRequests[0])
 				recordMatch(dbmap, openMatchRequests[0], matchRequest)
 			}
 
@@ -89,8 +86,6 @@ func main() {
 				if err == nil && matchId != "" {
 					matchRequest.MatchId = null.StringFrom(matchId)
 				}
-
-				fmt.Printf("reading: %+v\n", matchRequest)
 
 				js, err := json.Marshal(matchRequest)
 				checkErr(err, "Error writing JSON")
@@ -117,8 +112,6 @@ func main() {
 			matchId,
 		)
 		checkErr(err, "Error getting participants")
-
-		fmt.Printf("Participants: %v\n", participants)
 
 		match := Match{
 			Id:              matchId,
