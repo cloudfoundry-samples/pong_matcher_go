@@ -118,7 +118,7 @@ func ResultsHandler(w http.ResponseWriter, r *http.Request) {
 			FROM participants
 			WHERE match_id = :match_id
 			AND player_id = :player_id`,
-		map[string]interface{}{
+		map[string]string{
 			"match_id":  result.MatchId,
 			"player_id": result.Winner,
 		},
@@ -130,7 +130,7 @@ func ResultsHandler(w http.ResponseWriter, r *http.Request) {
 			FROM participants
 			WHERE match_id = :match_id
 			AND player_id = :player_id`,
-		map[string]interface{}{
+		map[string]string{
 			"match_id":  result.MatchId,
 			"player_id": result.Loser,
 		},
@@ -141,3 +141,4 @@ func ResultsHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(201)
 }
+
