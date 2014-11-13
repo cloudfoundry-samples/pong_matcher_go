@@ -44,141 +44,154 @@ type Result struct {
 }
 
 func main() {
+	http.HandleFunc("/all", AllHandler)
+	http.HandleFunc("/match_requests/", MatchRequestHandler)
+	http.HandleFunc("/matches/", MatchHandler)
+	http.HandleFunc("/results", ResultsHandler)
+	http.ListenAndServe(":3000", nil)
+}
+
+func AllHandler(w http.ResponseWriter, r *http.Request) {
 	dbmap := initDb()
 	defer dbmap.Db.Close()
 
-	http.HandleFunc("/all", func(w http.ResponseWriter, r *http.Request) {
-		err := dbmap.TruncateTables()
-		checkErr(err, "Truncation failed")
-	})
+	err := dbmap.TruncateTables()
+	checkErr(err, "Truncation failed")
+}
 
-	http.HandleFunc("/match_requests/", func(w http.ResponseWriter, r *http.Request) {
-		urlParts := strings.Split(r.URL.Path, "/")
-		uuid := urlParts[len(urlParts)-1]
+func MatchRequestHandler(w http.ResponseWriter, r *http.Request) {
+	dbmap := initDb()
+	defer dbmap.Db.Close()
 
-		switch r.Method {
+	urlParts := strings.Split(r.URL.Path, "/")
+	uuid := urlParts[len(urlParts)-1]
 
-		case "PUT":
-			var matchRequest MatchRequest
+	switch r.Method {
 
-			decoder := json.NewDecoder(r.Body)
+	case "PUT":
+		var matchRequest MatchRequest
 
-			err := decoder.Decode(&matchRequest)
-			checkErr(err, "Decoding JSON failed")
+		decoder := json.NewDecoder(r.Body)
 
-			matchRequest.Uuid = uuid
+		err := decoder.Decode(&matchRequest)
+		checkErr(err, "Decoding JSON failed")
 
-			err = dbmap.Insert(&matchRequest)
-			checkErr(err, "Creation of MatchRequest failed")
+		matchRequest.Uuid = uuid
 
-			openMatchRequests := suitableOpponentMatchRequests(dbmap, matchRequest.RequesterId)
-			if len(openMatchRequests) > 0 {
-				recordMatch(dbmap, openMatchRequests[0], matchRequest)
-			}
+		err = dbmap.Insert(&matchRequest)
+		checkErr(err, "Creation of MatchRequest failed")
 
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(200)
+		openMatchRequests := suitableOpponentMatchRequests(dbmap, matchRequest.RequesterId)
+		if len(openMatchRequests) > 0 {
+			recordMatch(dbmap, openMatchRequests[0], matchRequest)
+		}
 
-		case "GET":
-			matchRequest := MatchRequest{}
-			err := dbmap.SelectOne(
-				&matchRequest,
-				"SELECT * FROM match_requests WHERE uuid = ?", uuid,
-			)
-			if err == nil {
-				matchId, err := dbmap.SelectStr(
-					`SELECT match_id
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(200)
+
+	case "GET":
+		matchRequest := MatchRequest{}
+		err := dbmap.SelectOne(
+			&matchRequest,
+			"SELECT * FROM match_requests WHERE uuid = ?", uuid,
+		)
+		if err == nil {
+			matchId, err := dbmap.SelectStr(
+				`SELECT match_id
 					FROM participants
 					WHERE match_request_uuid = ?
 					AND match_id NOT IN (
 						SELECT match_id FROM results
 					)`,
-					uuid,
-				)
-				if err == nil && matchId != "" {
-					matchRequest.MatchId = null.StringFrom(matchId)
-				}
-
-				js, err := json.Marshal(matchRequest)
-				checkErr(err, "Error writing JSON")
-
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(200)
-				w.Write(js)
-			} else {
-				w.WriteHeader(404)
+				uuid,
+			)
+			if err == nil && matchId != "" {
+				matchRequest.MatchId = null.StringFrom(matchId)
 			}
+
+			js, err := json.Marshal(matchRequest)
+			checkErr(err, "Error writing JSON")
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(200)
+			w.Write(js)
+		} else {
+			w.WriteHeader(404)
 		}
-	})
+	}
+}
 
-	http.HandleFunc("/matches/", func(w http.ResponseWriter, r *http.Request) {
-		urlParts := strings.Split(r.URL.Path, "/")
-		matchId := urlParts[len(urlParts)-1]
+func MatchHandler(w http.ResponseWriter, r *http.Request) {
+	dbmap := initDb()
+	defer dbmap.Db.Close()
 
-		if matchId == "" {
-			log.Fatal("No match ID given!")
-		}
+	urlParts := strings.Split(r.URL.Path, "/")
+	matchId := urlParts[len(urlParts)-1]
 
-		var participants []Participant
-		_, err := dbmap.Select(
-			&participants,
-			`SELECT * 
+	if matchId == "" {
+		log.Fatal("No match ID given!")
+	}
+
+	var participants []Participant
+	_, err := dbmap.Select(
+		&participants,
+		`SELECT * 
 			FROM participants
 			WHERE match_id = ?`,
-			matchId,
-		)
-		checkErr(err, "Error getting participants")
+		matchId,
+	)
+	checkErr(err, "Error getting participants")
 
-		match := Match{
-			Id:              matchId,
-			MatchRequest1Id: participants[0].MatchRequestUuid,
-			MatchRequest2Id: participants[1].MatchRequestUuid,
-		}
+	match := Match{
+		Id:              matchId,
+		MatchRequest1Id: participants[0].MatchRequestUuid,
+		MatchRequest2Id: participants[1].MatchRequestUuid,
+	}
 
-		js, err := json.Marshal(match)
+	js, err := json.Marshal(match)
 
-		w.WriteHeader(200)
-		w.Write(js)
-	})
+	w.WriteHeader(200)
+	w.Write(js)
+}
 
-	http.HandleFunc("/results", func(w http.ResponseWriter, r *http.Request) {
-		var result Result
+func ResultsHandler(w http.ResponseWriter, r *http.Request) {
+	dbmap := initDb()
+	defer dbmap.Db.Close()
 
-		decoder := json.NewDecoder(r.Body)
+	var result Result
 
-		err := decoder.Decode(&result)
-		checkErr(err, "Decoding JSON failed")
+	decoder := json.NewDecoder(r.Body)
 
-		winningParticipantId, err := dbmap.SelectInt(
-			`SELECT id
+	err := decoder.Decode(&result)
+	checkErr(err, "Decoding JSON failed")
+
+	winningParticipantId, err := dbmap.SelectInt(
+		`SELECT id
 			FROM participants
 			WHERE match_id = :match_id
 			AND player_id = :player_id`,
-			map[string]interface{}{
-				"match_id":  result.MatchId,
-				"player_id": result.Winner,
-			},
-		)
-		result.WinningParticipantId = winningParticipantId
+		map[string]interface{}{
+			"match_id":  result.MatchId,
+			"player_id": result.Winner,
+		},
+	)
+	result.WinningParticipantId = winningParticipantId
 
-		losingParticipantId, err := dbmap.SelectInt(
-			`SELECT id
+	losingParticipantId, err := dbmap.SelectInt(
+		`SELECT id
 			FROM participants
 			WHERE match_id = :match_id
 			AND player_id = :player_id`,
-			map[string]interface{}{
-				"match_id":  result.MatchId,
-				"player_id": result.Loser,
-			},
-		)
-		result.LosingParticipantId = losingParticipantId
+		map[string]interface{}{
+			"match_id":  result.MatchId,
+			"player_id": result.Loser,
+		},
+	)
+	result.LosingParticipantId = losingParticipantId
 
-		dbmap.Insert(&result)
+	dbmap.Insert(&result)
 
-		w.WriteHeader(201)
-	})
-
-	http.ListenAndServe(":3000", nil)
+	w.WriteHeader(201)
 }
 
 func suitableOpponentMatchRequests(dbmap *gorp.DbMap, requesterId string) []MatchRequest {
