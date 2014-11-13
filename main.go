@@ -15,10 +15,23 @@ import (
 
 func main() {
 	router := mux.NewRouter()
-	router.HandleFunc("/all", AllHandler)
-	router.HandleFunc("/match_requests/{uuid}", MatchRequestHandler)
-	router.HandleFunc("/matches/{uuid}", MatchHandler)
-	router.HandleFunc("/results", ResultsHandler)
+
+	router.
+		HandleFunc("/all", AllHandler).
+		Methods("DELETE")
+	router.
+		HandleFunc("/match_requests/{uuid}", CreateMatchRequestHandler).
+		Methods("PUT")
+	router.
+		HandleFunc("/match_requests/{uuid}", GetMatchRequestHandler).
+		Methods("GET")
+	router.
+		HandleFunc("/matches/{uuid}", MatchHandler).
+		Methods("GET")
+	router.
+		HandleFunc("/results", ResultsHandler).
+		Methods("POST")
+
 	http.Handle("/", router)
 	http.ListenAndServe(":3000", nil)
 }
@@ -61,64 +74,66 @@ func AllHandler(w http.ResponseWriter, r *http.Request) {
 	checkErr(err, "Truncation failed")
 }
 
-func MatchRequestHandler(w http.ResponseWriter, r *http.Request) {
+func CreateMatchRequestHandler(w http.ResponseWriter, r *http.Request) {
 	dbmap := initDb()
 	defer dbmap.Db.Close()
 
 	uuid := mux.Vars(r)["uuid"]
 
-	switch r.Method {
+	var matchRequest MatchRequest
 
-	case "PUT":
-		var matchRequest MatchRequest
+	decoder := json.NewDecoder(r.Body)
 
-		decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&matchRequest)
+	checkErr(err, "Decoding JSON failed")
 
-		err := decoder.Decode(&matchRequest)
-		checkErr(err, "Decoding JSON failed")
+	matchRequest.Uuid = uuid
 
-		matchRequest.Uuid = uuid
+	err = dbmap.Insert(&matchRequest)
+	checkErr(err, "Creation of MatchRequest failed")
 
-		err = dbmap.Insert(&matchRequest)
-		checkErr(err, "Creation of MatchRequest failed")
+	openMatchRequests := suitableOpponentMatchRequests(dbmap, matchRequest.RequesterId)
+	if len(openMatchRequests) > 0 {
+		recordMatch(dbmap, openMatchRequests[0], matchRequest)
+	}
 
-		openMatchRequests := suitableOpponentMatchRequests(dbmap, matchRequest.RequesterId)
-		if len(openMatchRequests) > 0 {
-			recordMatch(dbmap, openMatchRequests[0], matchRequest)
-		}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(200)
+func GetMatchRequestHandler(w http.ResponseWriter, r *http.Request) {
+	dbmap := initDb()
+	defer dbmap.Db.Close()
 
-	case "GET":
-		matchRequest := MatchRequest{}
-		err := dbmap.SelectOne(
-			&matchRequest,
-			"SELECT * FROM match_requests WHERE uuid = ?", uuid,
-		)
-		if err == nil {
-			matchId, err := dbmap.SelectStr(
-				`SELECT match_id
+	uuid := mux.Vars(r)["uuid"]
+
+	matchRequest := MatchRequest{}
+	err := dbmap.SelectOne(
+		&matchRequest,
+		"SELECT * FROM match_requests WHERE uuid = ?", uuid,
+	)
+	if err == nil {
+		matchId, err := dbmap.SelectStr(
+			`SELECT match_id
 					FROM participants
 					WHERE match_request_uuid = ?
 					AND match_id NOT IN (
 						SELECT match_id FROM results
 					)`,
-				uuid,
-			)
-			if err == nil && matchId != "" {
-				matchRequest.MatchId = null.StringFrom(matchId)
-			}
-
-			js, err := json.Marshal(matchRequest)
-			checkErr(err, "Error writing JSON")
-
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(200)
-			w.Write(js)
-		} else {
-			w.WriteHeader(404)
+			uuid,
+		)
+		if err == nil && matchId != "" {
+			matchRequest.MatchId = null.StringFrom(matchId)
 		}
+
+		js, err := json.Marshal(matchRequest)
+		checkErr(err, "Error writing JSON")
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(200)
+		w.Write(js)
+	} else {
+		w.WriteHeader(404)
 	}
 }
 
