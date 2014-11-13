@@ -97,6 +97,19 @@ func persistResult(result Result) {
 	dbmap.Insert(&result)
 }
 
+func persistMatchRequest(matchRequest MatchRequest) {
+	dbmap := initDb()
+	defer dbmap.Db.Close()
+
+	err := dbmap.Insert(&matchRequest)
+	checkErr(err, "Creation of MatchRequest failed")
+
+	openMatchRequests := suitableOpponentMatchRequests(dbmap, matchRequest.RequesterId)
+	if len(openMatchRequests) > 0 {
+		recordMatch(dbmap, openMatchRequests[0], matchRequest)
+	}
+}
+
 func initDb() *gorp.DbMap {
 	databaseUrl := os.Getenv("DATABASE_URL")
 	if databaseUrl == "" {

@@ -11,24 +11,14 @@ func AllHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func CreateMatchRequestHandler(w http.ResponseWriter, r *http.Request) {
-	dbmap := initDb()
-	defer dbmap.Db.Close()
-
-	uuid := mux.Vars(r)["uuid"]
-
 	var matchRequest MatchRequest
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&matchRequest)
 	checkErr(err, "Decoding JSON failed")
-	matchRequest.Uuid = uuid
 
-	err = dbmap.Insert(&matchRequest)
-	checkErr(err, "Creation of MatchRequest failed")
+	matchRequest.Uuid = mux.Vars(r)["uuid"]
 
-	openMatchRequests := suitableOpponentMatchRequests(dbmap, matchRequest.RequesterId)
-	if len(openMatchRequests) > 0 {
-		recordMatch(dbmap, openMatchRequests[0], matchRequest)
-	}
+	persistMatchRequest(matchRequest)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
