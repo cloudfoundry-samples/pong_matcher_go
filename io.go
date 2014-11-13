@@ -110,39 +110,6 @@ func persistMatchRequest(matchRequest MatchRequest) {
 	}
 }
 
-func initDb() *gorp.DbMap {
-	databaseUrl := os.Getenv("DATABASE_URL")
-	if databaseUrl == "" {
-		databaseUrl = "mysql2://gopong:gopong@127.0.0.1:3306/pong_matcher_go_development?reconnect=true"
-	}
-
-	url, err := url.Parse(databaseUrl)
-	checkErr(err, "Error parsing DATABASE_URL")
-
-	formattedUrl := fmt.Sprintf(
-		"%v@tcp(%v)%v",
-		url.User,
-		url.Host,
-		url.Path,
-	)
-
-	db, err := sql.Open("mysql", formattedUrl)
-	checkErr(err, "failed to establish database connection")
-
-	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{"InnoDB", "UTF8"}}
-
-	dbmap.AddTableWithName(MatchRequest{}, "match_requests").SetKeys(true, "Id")
-	dbmap.AddTableWithName(Participant{}, "participants").
-		SetKeys(true, "Id").
-		ColMap("match_request_uuid").SetUnique(true)
-	dbmap.AddTableWithName(Result{}, "results").SetKeys(true, "Id")
-
-	err = dbmap.CreateTablesIfNotExists()
-	checkErr(err, "Create tables failed")
-
-	return dbmap
-}
-
 func suitableOpponentMatchRequests(dbmap *gorp.DbMap, requesterId string) []MatchRequest {
 	var matchRequests []MatchRequest
 	_, err := dbmap.Select(
@@ -187,4 +154,37 @@ func recordMatch(dbmap *gorp.DbMap, openMatchRequest MatchRequest, newMatchReque
 	}
 	err = dbmap.Insert(&participant1, &participant2)
 	checkErr(err, "Couldn't insert participants")
+}
+
+func initDb() *gorp.DbMap {
+	databaseUrl := os.Getenv("DATABASE_URL")
+	if databaseUrl == "" {
+		databaseUrl = "mysql2://gopong:gopong@127.0.0.1:3306/pong_matcher_go_development?reconnect=true"
+	}
+
+	url, err := url.Parse(databaseUrl)
+	checkErr(err, "Error parsing DATABASE_URL")
+
+	formattedUrl := fmt.Sprintf(
+		"%v@tcp(%v)%v",
+		url.User,
+		url.Host,
+		url.Path,
+	)
+
+	db, err := sql.Open("mysql", formattedUrl)
+	checkErr(err, "failed to establish database connection")
+
+	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{"InnoDB", "UTF8"}}
+
+	dbmap.AddTableWithName(MatchRequest{}, "match_requests").SetKeys(true, "Id")
+	dbmap.AddTableWithName(Participant{}, "participants").
+		SetKeys(true, "Id").
+		ColMap("match_request_uuid").SetUnique(true)
+	dbmap.AddTableWithName(Result{}, "results").SetKeys(true, "Id")
+
+	err = dbmap.CreateTablesIfNotExists()
+	checkErr(err, "Create tables failed")
+
+	return dbmap
 }
