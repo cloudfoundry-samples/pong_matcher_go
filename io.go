@@ -2,22 +2,14 @@ package main
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"github.com/coopernurse/gorp"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/nu7hatch/gouuid"
 	"gopkg.in/guregu/null.v2"
-	"io"
 	"net/url"
 	"os"
 )
-
-func (matchRequest *MatchRequest) fromJson(source io.ReadCloser) {
-	decoder := json.NewDecoder(source)
-	err := decoder.Decode(&matchRequest)
-	checkErr(err, "Decoding JSON failed")
-}
 
 func getMatchRequest(uuid string) (bool, MatchRequest) {
 	dbmap := initDb()

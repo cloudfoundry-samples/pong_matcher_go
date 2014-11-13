@@ -72,9 +72,9 @@ func ResultsHandler(w http.ResponseWriter, r *http.Request) {
 
 	winningParticipantId, err := dbmap.SelectInt(
 		`SELECT id
-			FROM participants
-			WHERE match_id = :match_id
-			AND player_id = :player_id`,
+		FROM participants
+		WHERE match_id = :match_id
+		AND player_id = :player_id`,
 		map[string]string{
 			"match_id":  result.MatchId,
 			"player_id": result.Winner,
@@ -84,9 +84,9 @@ func ResultsHandler(w http.ResponseWriter, r *http.Request) {
 
 	losingParticipantId, err := dbmap.SelectInt(
 		`SELECT id
-			FROM participants
-			WHERE match_id = :match_id
-			AND player_id = :player_id`,
+		FROM participants
+		WHERE match_id = :match_id
+		AND player_id = :player_id`,
 		map[string]string{
 			"match_id":  result.MatchId,
 			"player_id": result.Loser,
