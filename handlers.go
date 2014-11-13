@@ -7,11 +7,7 @@ import (
 )
 
 func AllHandler(w http.ResponseWriter, r *http.Request) {
-	dbmap := initDb()
-	defer dbmap.Db.Close()
-
-	err := dbmap.TruncateTables()
-	checkErr(err, "Truncation failed")
+	deleteAll()
 }
 
 func CreateMatchRequestHandler(w http.ResponseWriter, r *http.Request) {

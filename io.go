@@ -11,6 +11,14 @@ import (
 	"os"
 )
 
+func deleteAll() {
+	dbmap := initDb()
+	defer dbmap.Db.Close()
+
+	err := dbmap.TruncateTables()
+	checkErr(err, "Truncation failed")
+}
+
 func getMatchRequest(uuid string) (bool, MatchRequest) {
 	dbmap := initDb()
 	defer dbmap.Db.Close()
