@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/coopernurse/gorp"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/gorilla/mux"
 	"github.com/nu7hatch/gouuid"
 	"gopkg.in/guregu/null.v2"
 	"log"
@@ -14,10 +15,12 @@ import (
 )
 
 func main() {
-	http.HandleFunc("/all", AllHandler)
-	http.HandleFunc("/match_requests/", MatchRequestHandler)
-	http.HandleFunc("/matches/", MatchHandler)
-	http.HandleFunc("/results", ResultsHandler)
+	router := mux.NewRouter()
+	router.HandleFunc("/all", AllHandler)
+	router.HandleFunc("/match_requests/{uuid}", MatchRequestHandler)
+	router.HandleFunc("/matches/{uuid}", MatchHandler)
+	router.HandleFunc("/results", ResultsHandler)
+	http.Handle("/", router)
 	http.ListenAndServe(":3000", nil)
 }
 
