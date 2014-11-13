@@ -52,31 +52,13 @@ func GetMatchRequestHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func MatchHandler(w http.ResponseWriter, r *http.Request) {
-	dbmap := initDb()
-	defer dbmap.Db.Close()
+	if found, match := getMatch(mux.Vars(r)["uuid"]); found {
+		js, err := json.Marshal(match)
+		checkErr(err, "Error writing JSON")
 
-	matchId := mux.Vars(r)["uuid"]
-
-	var participants []Participant
-	_, err := dbmap.Select(
-		&participants,
-		`SELECT * 
-			FROM participants
-			WHERE match_id = ?`,
-		matchId,
-	)
-	checkErr(err, "Error getting participants")
-
-	match := Match{
-		Id:              matchId,
-		MatchRequest1Id: participants[0].MatchRequestUuid,
-		MatchRequest2Id: participants[1].MatchRequestUuid,
+		w.WriteHeader(200)
+		w.Write(js)
 	}
-
-	js, err := json.Marshal(match)
-
-	w.WriteHeader(200)
-	w.Write(js)
 }
 
 func ResultsHandler(w http.ResponseWriter, r *http.Request) {

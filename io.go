@@ -45,6 +45,25 @@ func getMatchRequest(uuid string) (bool, MatchRequest) {
 	}
 }
 
+func getMatch(uuid string) (bool, Match) {
+	dbmap := initDb()
+	defer dbmap.Db.Close()
+
+	var participants []Participant
+	_, err := dbmap.Select(
+		&participants,
+		`SELECT * FROM participants WHERE match_id = ?`,
+		uuid,
+	)
+	checkErr(err, "Error getting participants")
+
+	return true, Match{
+		Id:              uuid,
+		MatchRequest1Id: participants[0].MatchRequestUuid,
+		MatchRequest2Id: participants[1].MatchRequestUuid,
+	}
+}
+
 func initDb() *gorp.DbMap {
 	databaseUrl := os.Getenv("DATABASE_URL")
 	if databaseUrl == "" {
