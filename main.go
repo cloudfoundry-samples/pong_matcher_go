@@ -81,9 +81,7 @@ func CreateMatchRequestHandler(w http.ResponseWriter, r *http.Request) {
 	uuid := mux.Vars(r)["uuid"]
 
 	var matchRequest MatchRequest
-
 	decoder := json.NewDecoder(r.Body)
-
 	err := decoder.Decode(&matchRequest)
 	checkErr(err, "Decoding JSON failed")
 
@@ -143,10 +141,6 @@ func MatchHandler(w http.ResponseWriter, r *http.Request) {
 
 	matchId := mux.Vars(r)["uuid"]
 
-	if matchId == "" {
-		log.Fatal("No match ID given!")
-	}
-
 	var participants []Participant
 	_, err := dbmap.Select(
 		&participants,
@@ -174,9 +168,7 @@ func ResultsHandler(w http.ResponseWriter, r *http.Request) {
 	defer dbmap.Db.Close()
 
 	var result Result
-
 	decoder := json.NewDecoder(r.Body)
-
 	err := decoder.Decode(&result)
 	checkErr(err, "Decoding JSON failed")
 
