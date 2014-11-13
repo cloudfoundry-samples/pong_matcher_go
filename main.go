@@ -13,6 +13,14 @@ import (
 	"strings"
 )
 
+func main() {
+	http.HandleFunc("/all", AllHandler)
+	http.HandleFunc("/match_requests/", MatchRequestHandler)
+	http.HandleFunc("/matches/", MatchHandler)
+	http.HandleFunc("/results", ResultsHandler)
+	http.ListenAndServe(":3000", nil)
+}
+
 type MatchRequest struct {
 	Id          int64       `json:"-" db:"id"`
 	Uuid        string      `json:"id" db:"uuid"`
@@ -41,14 +49,6 @@ type Result struct {
 	Loser                string `json:"loser" db:"loser"`
 	WinningParticipantId int64  `db:"winning_participant_id"`
 	LosingParticipantId  int64  `db:"losing_participant_id"`
-}
-
-func main() {
-	http.HandleFunc("/all", AllHandler)
-	http.HandleFunc("/match_requests/", MatchRequestHandler)
-	http.HandleFunc("/matches/", MatchHandler)
-	http.HandleFunc("/results", ResultsHandler)
-	http.ListenAndServe(":3000", nil)
 }
 
 func AllHandler(w http.ResponseWriter, r *http.Request) {
