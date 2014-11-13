@@ -130,9 +130,11 @@ func initDb() *gorp.DbMap {
 	checkErr(err, "failed to establish database connection")
 
 	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{"InnoDB", "UTF8"}}
+
 	dbmap.AddTableWithName(MatchRequest{}, "match_requests").SetKeys(true, "Id")
-	participants := dbmap.AddTableWithName(Participant{}, "participants").SetKeys(true, "Id")
-	participants.ColMap("match_request_uuid").SetUnique(true)
+	dbmap.AddTableWithName(Participant{}, "participants").
+		SetKeys(true, "Id").
+		ColMap("match_request_uuid").SetUnique(true)
 	dbmap.AddTableWithName(Result{}, "results").SetKeys(true, "Id")
 
 	err = dbmap.CreateTablesIfNotExists()
