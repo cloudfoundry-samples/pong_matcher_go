@@ -11,7 +11,6 @@ import (
 	"gopkg.in/guregu/null.v2"
 	"log"
 	"net/http"
-	"strings"
 )
 
 func main() {
@@ -66,8 +65,7 @@ func MatchRequestHandler(w http.ResponseWriter, r *http.Request) {
 	dbmap := initDb()
 	defer dbmap.Db.Close()
 
-	urlParts := strings.Split(r.URL.Path, "/")
-	uuid := urlParts[len(urlParts)-1]
+	uuid := mux.Vars(r)["uuid"]
 
 	switch r.Method {
 
@@ -128,8 +126,7 @@ func MatchHandler(w http.ResponseWriter, r *http.Request) {
 	dbmap := initDb()
 	defer dbmap.Db.Close()
 
-	urlParts := strings.Split(r.URL.Path, "/")
-	matchId := urlParts[len(urlParts)-1]
+	matchId := mux.Vars(r)["uuid"]
 
 	if matchId == "" {
 		log.Fatal("No match ID given!")
