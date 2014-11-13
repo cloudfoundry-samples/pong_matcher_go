@@ -2,13 +2,48 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"github.com/coopernurse/gorp"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/nu7hatch/gouuid"
+	"gopkg.in/guregu/null.v2"
+	"io"
 	"net/url"
 	"os"
 )
+
+func (matchRequest *MatchRequest) fromJson(source io.ReadCloser) {
+	decoder := json.NewDecoder(source)
+	err := decoder.Decode(&matchRequest)
+	checkErr(err, "Decoding JSON failed")
+}
+
+func getMatchRequest(uuid string) (bool, MatchRequest) {
+	dbmap := initDb()
+	defer dbmap.Db.Close()
+
+	matchRequest := MatchRequest{}
+	err := dbmap.SelectOne(
+		&matchRequest,
+		"SELECT * FROM match_requests WHERE uuid = ?", uuid,
+	)
+	if err == nil {
+		matchId, err := dbmap.SelectStr(
+			`SELECT match_id
+			FROM participants
+			WHERE match_request_uuid = ?
+			AND match_id NOT IN (SELECT match_id FROM results)`,
+			uuid,
+		)
+		if err == nil && matchId != "" {
+			matchRequest.MatchId = null.StringFrom(matchId)
+		}
+		return true, matchRequest
+	} else {
+		return false, matchRequest
+	}
+}
 
 func initDb() *gorp.DbMap {
 	databaseUrl := os.Getenv("DATABASE_URL")

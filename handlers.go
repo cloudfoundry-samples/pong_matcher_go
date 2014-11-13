@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"github.com/gorilla/mux"
-	"gopkg.in/guregu/null.v2"
 	"net/http"
 )
 
@@ -25,7 +24,6 @@ func CreateMatchRequestHandler(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&matchRequest)
 	checkErr(err, "Decoding JSON failed")
-
 	matchRequest.Uuid = uuid
 
 	err = dbmap.Insert(&matchRequest)
@@ -41,30 +39,7 @@ func CreateMatchRequestHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetMatchRequestHandler(w http.ResponseWriter, r *http.Request) {
-	dbmap := initDb()
-	defer dbmap.Db.Close()
-
-	uuid := mux.Vars(r)["uuid"]
-
-	matchRequest := MatchRequest{}
-	err := dbmap.SelectOne(
-		&matchRequest,
-		"SELECT * FROM match_requests WHERE uuid = ?", uuid,
-	)
-	if err == nil {
-		matchId, err := dbmap.SelectStr(
-			`SELECT match_id
-					FROM participants
-					WHERE match_request_uuid = ?
-					AND match_id NOT IN (
-						SELECT match_id FROM results
-					)`,
-			uuid,
-		)
-		if err == nil && matchId != "" {
-			matchRequest.MatchId = null.StringFrom(matchId)
-		}
-
+	if found, matchRequest := getMatchRequest(mux.Vars(r)["uuid"]); found {
 		js, err := json.Marshal(matchRequest)
 		checkErr(err, "Error writing JSON")
 
@@ -141,4 +116,3 @@ func ResultsHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(201)
 }
-
