@@ -2,12 +2,18 @@ package main
 
 import (
 	"fmt"
+	"github.com/coopernurse/gorp"
 	"github.com/gorilla/mux"
 	"net/http"
 	"os"
 )
 
+var dbmap *gorp.DbMap
+
 func main() {
+	dbmap = initDb()
+	defer dbmap.Db.Close()
+
 	router := mux.NewRouter()
 
 	router.

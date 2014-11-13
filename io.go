@@ -12,17 +12,11 @@ import (
 )
 
 func deleteAll() {
-	dbmap := initDb()
-	defer dbmap.Db.Close()
-
 	err := dbmap.TruncateTables()
 	checkErr(err, "Truncation failed")
 }
 
 func getMatchRequest(uuid string) (bool, MatchRequest) {
-	dbmap := initDb()
-	defer dbmap.Db.Close()
-
 	matchRequest := MatchRequest{}
 	err := dbmap.SelectOne(
 		&matchRequest,
@@ -46,9 +40,6 @@ func getMatchRequest(uuid string) (bool, MatchRequest) {
 }
 
 func getMatch(uuid string) (bool, Match) {
-	dbmap := initDb()
-	defer dbmap.Db.Close()
-
 	var participants []Participant
 	_, err := dbmap.Select(
 		&participants,
@@ -65,9 +56,6 @@ func getMatch(uuid string) (bool, Match) {
 }
 
 func persistResult(result Result) {
-	dbmap := initDb()
-	defer dbmap.Db.Close()
-
 	winningParticipantId, err := dbmap.SelectInt(
 		`SELECT id
 		FROM participants
@@ -98,9 +86,6 @@ func persistResult(result Result) {
 }
 
 func persistMatchRequest(matchRequest MatchRequest) {
-	dbmap := initDb()
-	defer dbmap.Db.Close()
-
 	err := dbmap.Insert(&matchRequest)
 	checkErr(err, "Creation of MatchRequest failed")
 
