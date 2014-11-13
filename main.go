@@ -33,8 +33,7 @@ func main() {
 		HandleFunc("/results", ResultsHandler).
 		Methods("POST")
 
-	http.Handle("/", router)
-	http.ListenAndServe(fmt.Sprintf(":%v", GetPort()), nil)
+	http.ListenAndServe(fmt.Sprintf(":%v", GetPort()), router)
 }
 
 type MatchRequest struct {
