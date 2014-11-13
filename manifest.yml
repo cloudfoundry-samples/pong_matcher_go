@@ -1,0 +1,9 @@
+---
+applications:
+  - name: gopong
+    memory: 256M
+    instances: 1
+    buildpack: https://github.com/cloudfoundry/buildpack-go.git
+    services:
+      - mysql
+

@@ -11,6 +11,7 @@ import (
 	"gopkg.in/guregu/null.v2"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 )
 
@@ -256,7 +257,22 @@ func recordMatch(dbmap *gorp.DbMap, openMatchRequest MatchRequest, newMatchReque
 }
 
 func initDb() *gorp.DbMap {
-	db, err := sql.Open("mysql", "gopong:gopong@/pong_matcher_go_development?charset=utf8&parseTime=True")
+	databaseUrl := os.Getenv("DATABASE_URL")
+	if databaseUrl == "" {
+		databaseUrl = "mysql2://gopong:gopong@127.0.0.1:3306/pong_matcher_go_development?reconnect=true"
+	}
+
+	url, err := url.Parse(databaseUrl)
+	checkErr(err, "Error parsing DATABASE_URL")
+
+	formattedUrl := fmt.Sprintf(
+		"%v@tcp(%v)%v",
+		url.User,
+		url.Host,
+		url.Path,
+	)
+
+	db, err := sql.Open("mysql", formattedUrl)
 	checkErr(err, "failed to establish database connection")
 
 	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{"InnoDB", "UTF8"}}
