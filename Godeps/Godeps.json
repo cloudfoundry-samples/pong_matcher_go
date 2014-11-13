@@ -1,0 +1,33 @@
+{
+	"ImportPath": "pong_matcher_go",
+	"GoVersion": "go1.3.1",
+	"Deps": [
+		{
+			"ImportPath": "github.com/coopernurse/gorp",
+			"Comment": "v1.7",
+			"Rev": "5d19ebd22fdcf3b9fb1c8cbfcf1d4e78e102f1e0"
+		},
+		{
+			"ImportPath": "github.com/go-sql-driver/mysql",
+			"Comment": "v1.2-26-g9543750",
+			"Rev": "9543750295406ef070f7de8ae9c43ccddd44e15e"
+		},
+		{
+			"ImportPath": "github.com/gorilla/context",
+			"Rev": "14f550f51af52180c2eefed15e5fd18d63c0a64a"
+		},
+		{
+			"ImportPath": "github.com/gorilla/mux",
+			"Rev": "e444e69cbd2e2e3e0749a2f3c717cec491552bbf"
+		},
+		{
+			"ImportPath": "github.com/nu7hatch/gouuid",
+			"Rev": "179d4d0c4d8d407a32af483c2354df1d2c91e6c3"
+		},
+		{
+			"ImportPath": "gopkg.in/guregu/null.v2",
+			"Comment": "v2.1.1",
+			"Rev": "5bc3c32da7d04df1bcea52382b239d6dcf4e6ded"
+		}
+	]
+}
