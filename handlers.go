@@ -62,39 +62,12 @@ func MatchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ResultsHandler(w http.ResponseWriter, r *http.Request) {
-	dbmap := initDb()
-	defer dbmap.Db.Close()
-
 	var result Result
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&result)
 	checkErr(err, "Decoding JSON failed")
 
-	winningParticipantId, err := dbmap.SelectInt(
-		`SELECT id
-		FROM participants
-		WHERE match_id = :match_id
-		AND player_id = :player_id`,
-		map[string]string{
-			"match_id":  result.MatchId,
-			"player_id": result.Winner,
-		},
-	)
-	result.WinningParticipantId = winningParticipantId
-
-	losingParticipantId, err := dbmap.SelectInt(
-		`SELECT id
-		FROM participants
-		WHERE match_id = :match_id
-		AND player_id = :player_id`,
-		map[string]string{
-			"match_id":  result.MatchId,
-			"player_id": result.Loser,
-		},
-	)
-	result.LosingParticipantId = losingParticipantId
-
-	dbmap.Insert(&result)
+	persistResult(result)
 
 	w.WriteHeader(201)
 }
