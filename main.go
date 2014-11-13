@@ -11,6 +11,7 @@ import (
 	"gopkg.in/guregu/null.v2"
 	"log"
 	"net/http"
+	"os"
 )
 
 func main() {
@@ -33,7 +34,7 @@ func main() {
 		Methods("POST")
 
 	http.Handle("/", router)
-	http.ListenAndServe(":3000", nil)
+	http.ListenAndServe(fmt.Sprintf(":%v", GetPort()), nil)
 }
 
 type MatchRequest struct {
@@ -64,6 +65,14 @@ type Result struct {
 	Loser                string `json:"loser" db:"loser"`
 	WinningParticipantId int64  `db:"winning_participant_id"`
 	LosingParticipantId  int64  `db:"losing_participant_id"`
+}
+
+func GetPort() string {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000"
+	}
+	return port
 }
 
 func AllHandler(w http.ResponseWriter, r *http.Request) {
