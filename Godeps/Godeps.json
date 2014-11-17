@@ -25,6 +25,10 @@
 			"Rev": "179d4d0c4d8d407a32af483c2354df1d2c91e6c3"
 		},
 		{
+			"ImportPath": "github.com/rubenv/sql-migrate",
+			"Rev": "09d124bf5f0e0fcee64b3f2571350de142724c26"
+		},
+		{
 			"ImportPath": "gopkg.in/guregu/null.v2",
 			"Comment": "v2.1.1",
 			"Rev": "5bc3c32da7d04df1bcea52382b239d6dcf4e6ded"
