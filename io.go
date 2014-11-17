@@ -176,5 +176,11 @@ func initDb() *gorp.DbMap {
 		"Couldn't migrate the database!",
 	)
 
+	dbmap.AddTableWithName(MatchRequest{}, "match_requests").SetKeys(true, "Id")
+	dbmap.AddTableWithName(Participant{}, "participants").
+		SetKeys(true, "Id").
+		ColMap("match_request_uuid").SetUnique(true)
+	dbmap.AddTableWithName(Result{}, "results").SetKeys(true, "Id")
+
 	return dbmap
 }
