@@ -20,7 +20,10 @@ func main() {
 		HandleFunc("/all", AllHandler).
 		Methods("DELETE")
 	router.
-		HandleFunc("/match_requests/{uuid}", CreateMatchRequestHandler).
+		HandleFunc(
+			"/match_requests/{uuid}",
+			CreateMatchRequestHandler(persistMatchRequest),
+		).
 		Methods("PUT")
 	router.
 		HandleFunc("/match_requests/{uuid}", GetMatchRequestHandler).
