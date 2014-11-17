@@ -6,6 +6,7 @@ import (
 	"github.com/coopernurse/gorp"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/nu7hatch/gouuid"
+	"github.com/rubenv/sql-migrate"
 	"gopkg.in/guregu/null.v2"
 	"net/url"
 	"os"
@@ -151,7 +152,7 @@ func initDb() *gorp.DbMap {
 	checkErr(err, "Error parsing DATABASE_URL")
 
 	formattedUrl := fmt.Sprintf(
-		"%v@tcp(%v)%v",
+		"%v@tcp(%v)%v?parseTime=true",
 		url.User,
 		url.Host,
 		url.Path,
@@ -162,14 +163,18 @@ func initDb() *gorp.DbMap {
 
 	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{"InnoDB", "UTF8"}}
 
-	dbmap.AddTableWithName(MatchRequest{}, "match_requests").SetKeys(true, "Id")
-	dbmap.AddTableWithName(Participant{}, "participants").
-		SetKeys(true, "Id").
-		ColMap("match_request_uuid").SetUnique(true)
-	dbmap.AddTableWithName(Result{}, "results").SetKeys(true, "Id")
+	migrations := &migrate.FileMigrationSource{
+		Dir: "db/migrations",
+	}
+	n, err := migrate.Exec(db, "mysql", migrations, migrate.Up)
 
-	err = dbmap.CreateTablesIfNotExists()
-	checkErr(err, "Create tables failed")
+	if n > 0 {
+		fmt.Printf("Successfully ran %v migrations\n", n)
+	}
+	checkErr(
+		err,
+		"Couldn't migrate the database!",
+	)
 
 	return dbmap
 }
