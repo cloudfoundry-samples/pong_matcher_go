@@ -146,6 +146,15 @@ func recordMatch(dbmap *gorp.DbMap, openMatchRequest MatchRequest, newMatchReque
 	return dbmap.Insert(&participant1, &participant2)
 }
 
+func formattedUrl(url *url.URL) string {
+	return fmt.Sprintf(
+		"%v@tcp(%v)%v?parseTime=true",
+		url.User,
+		url.Host,
+		url.Path,
+	)
+}
+
 func initDb() *gorp.DbMap {
 	databaseUrl := os.Getenv("DATABASE_URL")
 	if databaseUrl == "" {
@@ -155,14 +164,7 @@ func initDb() *gorp.DbMap {
 	url, err := url.Parse(databaseUrl)
 	checkErr(err, "Error parsing DATABASE_URL")
 
-	formattedUrl := fmt.Sprintf(
-		"%v@tcp(%v)%v?parseTime=true",
-		url.User,
-		url.Host,
-		url.Path,
-	)
-
-	db, err := sql.Open("mysql", formattedUrl)
+	db, err := sql.Open("mysql", formattedUrl(url))
 	checkErr(err, "failed to establish database connection")
 
 	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{"InnoDB", "UTF8"}}
