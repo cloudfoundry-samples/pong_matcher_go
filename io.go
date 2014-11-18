@@ -86,14 +86,17 @@ func persistResult(result Result) {
 	dbmap.Insert(&result)
 }
 
-func persistMatchRequest(matchRequest MatchRequest) {
+func persistMatchRequest(matchRequest MatchRequest) error {
 	err := dbmap.Insert(&matchRequest)
-	checkErr(err, "Creation of MatchRequest failed")
+	if err != nil {
+		return err
+	}
 
 	openMatchRequests := suitableOpponentMatchRequests(dbmap, matchRequest.RequesterId)
 	if len(openMatchRequests) > 0 {
-		recordMatch(dbmap, openMatchRequests[0], matchRequest)
+		return recordMatch(dbmap, openMatchRequests[0], matchRequest)
 	}
+	return nil
 }
 
 func suitableOpponentMatchRequests(dbmap *gorp.DbMap, requesterId string) []MatchRequest {
@@ -121,9 +124,11 @@ func suitableOpponentMatchRequests(dbmap *gorp.DbMap, requesterId string) []Matc
 	return matchRequests
 }
 
-func recordMatch(dbmap *gorp.DbMap, openMatchRequest MatchRequest, newMatchRequest MatchRequest) {
+func recordMatch(dbmap *gorp.DbMap, openMatchRequest MatchRequest, newMatchRequest MatchRequest) error {
 	matchIdUuid, err := uuid.NewV4()
-	checkErr(err, "Couldn't generate UUID")
+	if err != nil {
+		return err
+	}
 	matchId := fmt.Sprintf("%v", matchIdUuid)
 
 	participant1 := Participant{
@@ -138,8 +143,7 @@ func recordMatch(dbmap *gorp.DbMap, openMatchRequest MatchRequest, newMatchReque
 		PlayerId:         newMatchRequest.RequesterId,
 		OpponentId:       openMatchRequest.RequesterId,
 	}
-	err = dbmap.Insert(&participant1, &participant2)
-	checkErr(err, "Couldn't insert participants")
+	return dbmap.Insert(&participant1, &participant2)
 }
 
 func initDb() *gorp.DbMap {

@@ -10,7 +10,7 @@ func AllHandler(w http.ResponseWriter, r *http.Request) {
 	deleteAll()
 }
 
-type matchRequestPersister func(MatchRequest)
+type matchRequestPersister func(MatchRequest) error
 type matchRequestRetriever func(string) (bool, MatchRequest)
 type matchRetriever func(string) (bool, Match)
 type resultPersister func(Result)
@@ -21,9 +21,12 @@ func CreateMatchRequestHandler(persist matchRequestPersister) http.HandlerFunc {
 		decoder := json.NewDecoder(r.Body)
 		if err := decoder.Decode(&matchRequest); err == nil {
 			matchRequest.Uuid = mux.Vars(r)["uuid"]
-			persist(matchRequest)
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(200)
+			if err = persist(matchRequest); err == nil {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(200)
+			} else {
+				w.WriteHeader(500)
+			}
 		} else {
 			w.WriteHeader(400)
 		}

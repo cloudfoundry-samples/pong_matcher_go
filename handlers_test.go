@@ -5,6 +5,9 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -25,6 +28,9 @@ func stubbedMatchRetrieval(success bool) func(string) (bool, Match) {
 }
 
 var _ = Describe("Request handlers", func() {
+	wellFormedJson := func() io.Reader { return strings.NewReader(`{"player": "some-player"}`) }
+	blankBody := func() io.Reader { return strings.NewReader("") }
+
 	Describe("getting a match request", func() {
 		Context("when a match request is found", func() {
 			It("responds with 200", func() {
@@ -64,38 +70,61 @@ var _ = Describe("Request handlers", func() {
 	})
 
 	Describe("creating a match request", func() {
-		nullPersist := func(mr MatchRequest) {}
-		handle := CreateMatchRequestHandler(nullPersist)
+		Context("when persistence works", func() {
+			nullPersist := func(mr MatchRequest) error { return nil }
+			handle := CreateMatchRequestHandler(nullPersist)
 
-		Context("with a well-formed body", func() {
-			It("responds with 200", func() {
-				resp := httptest.NewRecorder()
-				req, err := http.NewRequest(
-					"PUT",
-					"/match_requests/foo",
-					strings.NewReader(`{"player": "some-player"}`),
-				)
+			Context("with a well-formed body", func() {
+				It("responds with 200", func() {
+					resp := httptest.NewRecorder()
+					req, err := http.NewRequest(
+						"PUT",
+						"/match_requests/foo",
+						wellFormedJson(),
+					)
 
-				handle(resp, req)
+					handle(resp, req)
 
-				Expect(err).NotTo(HaveOccurred())
-				Expect(resp.Code).To(Equal(200))
+					Expect(err).NotTo(HaveOccurred())
+					Expect(resp.Code).To(Equal(200))
+				})
+			})
+
+			Context("without a body", func() {
+				It("responds with 400", func() {
+					resp := httptest.NewRecorder()
+					req, err := http.NewRequest(
+						"PUT",
+						"/match_requests/foo",
+						blankBody(),
+					)
+
+					handle(resp, req)
+
+					Expect(err).NotTo(HaveOccurred())
+					Expect(resp.Code).To(Equal(400))
+				})
 			})
 		})
 
-		Context("without a body", func() {
-			It("responds with 400", func() {
+		Context("when persistence fails", func() {
+			errorPersist := func(mr MatchRequest) error {
+				return errors.New("Bad stuff")
+			}
+			handle := CreateMatchRequestHandler(errorPersist)
+
+			It("responds with 500", func() {
 				resp := httptest.NewRecorder()
 				req, err := http.NewRequest(
 					"PUT",
 					"/match_requests/foo",
-					strings.NewReader(""),
+					wellFormedJson(),
 				)
 
 				handle(resp, req)
 
 				Expect(err).NotTo(HaveOccurred())
-				Expect(resp.Code).To(Equal(400))
+				Expect(resp.Code).To(Equal(500))
 			})
 		})
 	})
@@ -131,7 +160,7 @@ var _ = Describe("Request handlers", func() {
 				req, err := http.NewRequest(
 					"POST",
 					"/results",
-					strings.NewReader(`{"some": "json"}`),
+					wellFormedJson(),
 				)
 
 				handle(resp, req)
@@ -147,7 +176,7 @@ var _ = Describe("Request handlers", func() {
 				req, err := http.NewRequest(
 					"POST",
 					"/results",
-					strings.NewReader(""),
+					blankBody(),
 				)
 
 				handle(resp, req)
