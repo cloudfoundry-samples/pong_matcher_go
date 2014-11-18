@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/coopernurse/gorp"
 	"github.com/gorilla/mux"
+	"log"
 	"net/http"
 	"os"
 )
@@ -21,9 +22,9 @@ func main() {
 		Methods("DELETE")
 	router.
 		HandleFunc(
-			"/match_requests/{uuid}",
-			CreateMatchRequestHandler(persistMatchRequest),
-		).
+		"/match_requests/{uuid}",
+		CreateMatchRequestHandler(persistMatchRequest),
+	).
 		Methods("PUT")
 	router.
 		HandleFunc("/match_requests/{uuid}", GetMatchRequestHandler(getMatchRequest)).
@@ -35,8 +36,9 @@ func main() {
 		HandleFunc("/results", ResultsHandler(persistResult)).
 		Methods("POST")
 
-	err := http.ListenAndServe(fmt.Sprintf(":%v", getPort()), router)
-	checkErr(err, "Error starting server")
+	if err := http.ListenAndServe(fmt.Sprintf(":%v", getPort()), router); err != nil {
+		log.Fatalln(err)
+	}
 }
 
 func getPort() string {
