@@ -1,4 +1,4 @@
-package main
+package domain
 
 import (
 	"gopkg.in/guregu/null.v2"

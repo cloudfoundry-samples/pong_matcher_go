@@ -1,15 +1,16 @@
 package main
 
 import (
+	"pong_matcher_go/domain"
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"net/http"
 )
 
-type matchRequestPersister func(MatchRequest) error
-type MatchRequestRetriever func(string) (bool, MatchRequest, error)
-type matchRetriever func(string) (bool, Match)
-type resultPersister func(Result) error
+type matchRequestPersister func(domain.MatchRequest) error
+type MatchRequestRetriever func(string) (bool, domain.MatchRequest, error)
+type matchRetriever func(string) (bool, domain.Match)
+type resultPersister func(domain.Result) error
 type wiper func() error
 
 func AllHandler(wipe wiper) http.HandlerFunc {
@@ -22,7 +23,7 @@ func AllHandler(wipe wiper) http.HandlerFunc {
 
 func CreateMatchRequestHandler(persist matchRequestPersister) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var matchRequest MatchRequest
+		var matchRequest domain.MatchRequest
 		decoder := json.NewDecoder(r.Body)
 		if err := decoder.Decode(&matchRequest); err == nil {
 			matchRequest.Uuid = mux.Vars(r)["uuid"]
@@ -73,7 +74,7 @@ func MatchHandler(retrieve matchRetriever) http.HandlerFunc {
 
 func ResultsHandler(persist resultPersister) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var result Result
+		var result domain.Result
 		decoder := json.NewDecoder(r.Body)
 		if err := decoder.Decode(&result); err != nil {
 			w.WriteHeader(400)

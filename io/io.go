@@ -1,4 +1,4 @@
-package main
+package io
 
 import (
 	"database/sql"
@@ -8,16 +8,60 @@ import (
 	"github.com/nu7hatch/gouuid"
 	"github.com/rubenv/sql-migrate"
 	"gopkg.in/guregu/null.v2"
+	"log"
 	"net/url"
 	"os"
+	"pong_matcher_go/domain"
 )
 
-func deleteAll() error {
+var dbmap *gorp.DbMap
+
+func InitDb() *gorp.DbMap {
+	databaseUrl := os.Getenv("DATABASE_URL")
+	if databaseUrl == "" {
+		databaseUrl = "mysql2://gopong:gopong@127.0.0.1:3306/pong_matcher_go_development?reconnect=true"
+	}
+
+	url, err := url.Parse(databaseUrl)
+	checkErr(err, "Error parsing DATABASE_URL")
+
+	db, err := sql.Open("mysql", formattedUrl(url))
+	checkErr(err, "failed to establish database connection")
+
+	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{"InnoDB", "UTF8"}}
+
+	migrations := &migrate.FileMigrationSource{
+		Dir: "db/migrations",
+	}
+	n, err := migrate.Exec(db, "mysql", migrations, migrate.Up)
+
+	if n > 0 {
+		fmt.Printf("Successfully ran %v migrations\n", n)
+	}
+	checkErr(
+		err,
+		"Couldn't migrate the database!",
+	)
+
+	dbmap.AddTableWithName(domain.MatchRequest{}, "match_requests").SetKeys(true, "Id")
+	dbmap.AddTableWithName(domain.Participant{}, "participants").
+		SetKeys(true, "Id").
+		ColMap("match_request_uuid").SetUnique(true)
+	dbmap.AddTableWithName(domain.Result{}, "results").SetKeys(true, "Id")
+
+	return dbmap
+}
+
+func CloseDb() {
+	dbmap.Db.Close()
+}
+
+func DeleteAll() error {
 	return dbmap.TruncateTables()
 }
 
-func getMatchRequest(uuid string) (bool, MatchRequest, error) {
-	matchRequest := MatchRequest{}
+func GetMatchRequest(uuid string) (bool, domain.MatchRequest, error) {
+	matchRequest := domain.MatchRequest{}
 	if err := dbmap.SelectOne(
 		&matchRequest,
 		"SELECT * FROM match_requests WHERE uuid = ?", uuid,
@@ -44,8 +88,8 @@ func getMatchRequest(uuid string) (bool, MatchRequest, error) {
 	return true, matchRequest, nil
 }
 
-func getMatch(uuid string) (bool, Match) {
-	var participants []Participant
+func GetMatch(uuid string) (bool, domain.Match) {
+	var participants []domain.Participant
 	_, err := dbmap.Select(
 		&participants,
 		`SELECT * FROM participants WHERE match_id = ?`,
@@ -53,14 +97,14 @@ func getMatch(uuid string) (bool, Match) {
 	)
 	checkErr(err, "Error getting participants")
 
-	return true, Match{
+	return true, domain.Match{
 		Id:              uuid,
 		MatchRequest1Id: participants[0].MatchRequestUuid,
 		MatchRequest2Id: participants[1].MatchRequestUuid,
 	}
 }
 
-func persistResult(result Result) error {
+func PersistResult(result domain.Result) error {
 	winningParticipantId, err := dbmap.SelectInt(
 		`SELECT id
 		FROM participants
@@ -94,7 +138,7 @@ func persistResult(result Result) error {
 	return dbmap.Insert(&result)
 }
 
-func persistMatchRequest(matchRequest MatchRequest) error {
+func PersistMatchRequest(matchRequest domain.MatchRequest) error {
 	err := dbmap.Insert(&matchRequest)
 	if err != nil {
 		return err
@@ -107,8 +151,8 @@ func persistMatchRequest(matchRequest MatchRequest) error {
 	return err
 }
 
-func suitableOpponentMatchRequests(dbmap *gorp.DbMap, requesterId string) ([]MatchRequest, error) {
-	var matchRequests []MatchRequest
+func suitableOpponentMatchRequests(dbmap *gorp.DbMap, requesterId string) ([]domain.MatchRequest, error) {
+	var matchRequests []domain.MatchRequest
 	_, err := dbmap.Select(
 		&matchRequests,
 		`SELECT *
@@ -116,7 +160,7 @@ func suitableOpponentMatchRequests(dbmap *gorp.DbMap, requesterId string) ([]Mat
 		WHERE requester_id <> :requester_id
 		AND uuid NOT IN (
 			SELECT match_request_uuid
-			FROM participants 
+			FROM participants
 		)
 		AND requester_id NOT IN (
 			SELECT opponent_id
@@ -129,20 +173,20 @@ func suitableOpponentMatchRequests(dbmap *gorp.DbMap, requesterId string) ([]Mat
 	return matchRequests, err
 }
 
-func recordMatch(dbmap *gorp.DbMap, openMatchRequest MatchRequest, newMatchRequest MatchRequest) error {
+func recordMatch(dbmap *gorp.DbMap, openMatchRequest domain.MatchRequest, newMatchRequest domain.MatchRequest) error {
 	matchIdUuid, err := uuid.NewV4()
 	if err != nil {
 		return err
 	}
 	matchId := fmt.Sprintf("%v", matchIdUuid)
 
-	participant1 := Participant{
+	participant1 := domain.Participant{
 		MatchId:          matchId,
 		MatchRequestUuid: openMatchRequest.Uuid,
 		PlayerId:         openMatchRequest.RequesterId,
 		OpponentId:       newMatchRequest.RequesterId,
 	}
-	participant2 := Participant{
+	participant2 := domain.Participant{
 		MatchId:          matchId,
 		MatchRequestUuid: newMatchRequest.Uuid,
 		PlayerId:         newMatchRequest.RequesterId,
@@ -160,38 +204,8 @@ func formattedUrl(url *url.URL) string {
 	)
 }
 
-func initDb() *gorp.DbMap {
-	databaseUrl := os.Getenv("DATABASE_URL")
-	if databaseUrl == "" {
-		databaseUrl = "mysql2://gopong:gopong@127.0.0.1:3306/pong_matcher_go_development?reconnect=true"
+func checkErr(err error, msg string) {
+	if err != nil {
+		log.Fatalln(msg, err)
 	}
-
-	url, err := url.Parse(databaseUrl)
-	checkErr(err, "Error parsing DATABASE_URL")
-
-	db, err := sql.Open("mysql", formattedUrl(url))
-	checkErr(err, "failed to establish database connection")
-
-	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{"InnoDB", "UTF8"}}
-
-	migrations := &migrate.FileMigrationSource{
-		Dir: "db/migrations",
-	}
-	n, err := migrate.Exec(db, "mysql", migrations, migrate.Up)
-
-	if n > 0 {
-		fmt.Printf("Successfully ran %v migrations\n", n)
-	}
-	checkErr(
-		err,
-		"Couldn't migrate the database!",
-	)
-
-	dbmap.AddTableWithName(MatchRequest{}, "match_requests").SetKeys(true, "Id")
-	dbmap.AddTableWithName(Participant{}, "participants").
-		SetKeys(true, "Id").
-		ColMap("match_request_uuid").SetUnique(true)
-	dbmap.AddTableWithName(Result{}, "results").SetKeys(true, "Id")
-
-	return dbmap
 }

@@ -2,38 +2,36 @@ package main
 
 import (
 	"fmt"
-	"github.com/coopernurse/gorp"
 	"github.com/gorilla/mux"
+	"pong_matcher_go/io"
 	"log"
 	"net/http"
 	"os"
 )
 
-var dbmap *gorp.DbMap
-
 func main() {
-	dbmap = initDb()
-	defer dbmap.Db.Close()
+	io.InitDb()
+	defer io.CloseDb()
 
 	router := mux.NewRouter()
 
 	router.
-		HandleFunc("/all", AllHandler(deleteAll)).
+		HandleFunc("/all", AllHandler(io.DeleteAll)).
 		Methods("DELETE")
 	router.
 		HandleFunc(
 		"/match_requests/{uuid}",
-		CreateMatchRequestHandler(persistMatchRequest),
+		CreateMatchRequestHandler(io.PersistMatchRequest),
 	).
 		Methods("PUT")
 	router.
-		HandleFunc("/match_requests/{uuid}", GetMatchRequestHandler(getMatchRequest)).
+		HandleFunc("/match_requests/{uuid}", GetMatchRequestHandler(io.GetMatchRequest)).
 		Methods("GET")
 	router.
-		HandleFunc("/matches/{uuid}", MatchHandler(getMatch)).
+		HandleFunc("/matches/{uuid}", MatchHandler(io.GetMatch)).
 		Methods("GET")
 	router.
-		HandleFunc("/results", ResultsHandler(persistResult)).
+		HandleFunc("/results", ResultsHandler(io.PersistResult)).
 		Methods("POST")
 
 	if err := http.ListenAndServe(fmt.Sprintf(":%v", getPort()), router); err != nil {

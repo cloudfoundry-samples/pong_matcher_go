@@ -2,6 +2,7 @@ package main_test
 
 import (
 	. "pong_matcher_go"
+	. "pong_matcher_go/domain"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
