@@ -6,14 +6,19 @@ import (
 	"net/http"
 )
 
-func AllHandler(w http.ResponseWriter, r *http.Request) {
-	deleteAll()
-}
-
 type matchRequestPersister func(MatchRequest) error
 type matchRequestRetriever func(string) (bool, MatchRequest)
 type matchRetriever func(string) (bool, Match)
 type resultPersister func(Result) error
+type wiper func() error
+
+func AllHandler(wipe wiper) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if err := wipe(); err != nil {
+			w.WriteHeader(500)
+		}
+	}
+}
 
 func CreateMatchRequestHandler(persist matchRequestPersister) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

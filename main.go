@@ -18,7 +18,7 @@ func main() {
 	router := mux.NewRouter()
 
 	router.
-		HandleFunc("/all", AllHandler).
+		HandleFunc("/all", AllHandler(deleteAll)).
 		Methods("DELETE")
 	router.
 		HandleFunc(

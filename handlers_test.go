@@ -192,4 +192,23 @@ var _ = Describe("Request handlers", func() {
 			})
 		})
 	})
+
+	Describe("wiping the database", func() {
+		Context("when deletion produces an error", func() {
+			errorDelete := func() error {
+				return errors.New("Bad stuff")
+			}
+			handle := AllHandler(errorDelete)
+
+			It("responds with 500", func() {
+				resp := httptest.NewRecorder()
+				req, err := http.NewRequest("DELETE", "/all", nil)
+
+				handle(resp, req)
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp.Code).To(Equal(500))
+			})
+		})
+	})
 })

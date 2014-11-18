@@ -12,9 +12,8 @@ import (
 	"os"
 )
 
-func deleteAll() {
-	err := dbmap.TruncateTables()
-	checkErr(err, "Truncation failed")
+func deleteAll() error {
+	return dbmap.TruncateTables()
 }
 
 func getMatchRequest(uuid string) (bool, MatchRequest) {
