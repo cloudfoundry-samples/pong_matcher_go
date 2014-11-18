@@ -33,6 +33,28 @@ var _ = Describe("Request handlers", func() {
 				Expect(resp.Code).To(Equal(200))
 			})
 		})
+
+		Context("when a match request is not found", func() {
+			stubRetrieve := func(uuid string) (bool, MatchRequest) {
+				mr := MatchRequest{}
+				return false, mr
+			}
+			handle := GetMatchRequestHandler(stubRetrieve)
+
+			It("responds with 404", func() {
+				resp := httptest.NewRecorder()
+				req, err := http.NewRequest(
+					"GET",
+					"/match_requests/foo",
+					nil,
+				)
+
+				handle(resp, req)
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp.Code).To(Equal(404))
+			})
+		})
 	})
 
 	Describe("CreateMatchRequestHandler", func() {
