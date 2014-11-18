@@ -29,10 +29,10 @@ func main() {
 		HandleFunc("/match_requests/{uuid}", GetMatchRequestHandler(getMatchRequest)).
 		Methods("GET")
 	router.
-		HandleFunc("/matches/{uuid}", MatchHandler).
+		HandleFunc("/matches/{uuid}", MatchHandler(getMatch)).
 		Methods("GET")
 	router.
-		HandleFunc("/results", ResultsHandler).
+		HandleFunc("/results", ResultsHandler(persistResult)).
 		Methods("POST")
 
 	err := http.ListenAndServe(fmt.Sprintf(":%v", getPort()), router)
