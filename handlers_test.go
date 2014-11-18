@@ -10,16 +10,19 @@ import (
 	"strings"
 )
 
+func stubbedRetrieval(success bool) func(string) (bool, MatchRequest) {
+	return func(uuid string) (bool, MatchRequest) {
+		mr := MatchRequest{}
+		return success, mr
+	}
+}
+
 var _ = Describe("Request handlers", func() {
 	Describe("GetMatchRequestHandler", func() {
 		Context("when a match request is found", func() {
-			stubRetrieve := func(uuid string) (bool, MatchRequest) {
-				mr := MatchRequest{}
-				return true, mr
-			}
-			handle := GetMatchRequestHandler(stubRetrieve)
-
 			It("responds with 200", func() {
+				handle := GetMatchRequestHandler(stubbedRetrieval(true))
+
 				resp := httptest.NewRecorder()
 				req, err := http.NewRequest(
 					"GET",
@@ -35,13 +38,9 @@ var _ = Describe("Request handlers", func() {
 		})
 
 		Context("when a match request is not found", func() {
-			stubRetrieve := func(uuid string) (bool, MatchRequest) {
-				mr := MatchRequest{}
-				return false, mr
-			}
-			handle := GetMatchRequestHandler(stubRetrieve)
-
 			It("responds with 404", func() {
+				handle := GetMatchRequestHandler(stubbedRetrieval(false))
+
 				resp := httptest.NewRecorder()
 				req, err := http.NewRequest(
 					"GET",
