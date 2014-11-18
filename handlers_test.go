@@ -18,7 +18,7 @@ func stubbedRetrieval(success bool) func(string) (bool, MatchRequest) {
 }
 
 var _ = Describe("Request handlers", func() {
-	Describe("GetMatchRequestHandler", func() {
+	Describe("getting a match request", func() {
 		Context("when a match request is found", func() {
 			It("responds with 200", func() {
 				handle := GetMatchRequestHandler(stubbedRetrieval(true))
@@ -56,7 +56,7 @@ var _ = Describe("Request handlers", func() {
 		})
 	})
 
-	Describe("CreateMatchRequestHandler", func() {
+	Describe("creating a match request", func() {
 		nullPersist := func(mr MatchRequest) {}
 		handle := CreateMatchRequestHandler(nullPersist)
 
