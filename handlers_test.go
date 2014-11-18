@@ -38,9 +38,7 @@ var _ = Describe("Request handlers", func() {
 
 				resp := httptest.NewRecorder()
 				req, err := http.NewRequest(
-					"GET",
-					"/match_requests/foo",
-					nil,
+					"GET", "/match_requests/foo", nil,
 				)
 
 				handle(resp, req)
@@ -56,9 +54,7 @@ var _ = Describe("Request handlers", func() {
 
 				resp := httptest.NewRecorder()
 				req, err := http.NewRequest(
-					"GET",
-					"/match_requests/foo",
-					nil,
+					"GET", "/match_requests/foo", nil,
 				)
 
 				handle(resp, req)
@@ -78,9 +74,7 @@ var _ = Describe("Request handlers", func() {
 				It("responds with 200", func() {
 					resp := httptest.NewRecorder()
 					req, err := http.NewRequest(
-						"PUT",
-						"/match_requests/foo",
-						wellFormedJson(),
+						"PUT", "/match_requests/foo", wellFormedJson(),
 					)
 
 					handle(resp, req)
@@ -94,9 +88,7 @@ var _ = Describe("Request handlers", func() {
 				It("responds with 400", func() {
 					resp := httptest.NewRecorder()
 					req, err := http.NewRequest(
-						"PUT",
-						"/match_requests/foo",
-						blankBody(),
+						"PUT", "/match_requests/foo", blankBody(),
 					)
 
 					handle(resp, req)
@@ -116,9 +108,7 @@ var _ = Describe("Request handlers", func() {
 			It("responds with 500", func() {
 				resp := httptest.NewRecorder()
 				req, err := http.NewRequest(
-					"PUT",
-					"/match_requests/foo",
-					wellFormedJson(),
+					"PUT", "/match_requests/foo", wellFormedJson(),
 				)
 
 				handle(resp, req)
@@ -136,9 +126,7 @@ var _ = Describe("Request handlers", func() {
 
 				resp := httptest.NewRecorder()
 				req, err := http.NewRequest(
-					"GET",
-					"/matches/foo",
-					nil,
+					"GET", "/matches/foo", nil,
 				)
 
 				handle(resp, req)
@@ -158,9 +146,7 @@ var _ = Describe("Request handlers", func() {
 			It("responds with 201", func() {
 				resp := httptest.NewRecorder()
 				req, err := http.NewRequest(
-					"POST",
-					"/results",
-					wellFormedJson(),
+					"POST", "/results", wellFormedJson(),
 				)
 
 				handle(resp, req)
@@ -174,9 +160,7 @@ var _ = Describe("Request handlers", func() {
 			It("responds with 400", func() {
 				resp := httptest.NewRecorder()
 				req, err := http.NewRequest(
-					"POST",
-					"/results",
-					blankBody(),
+					"POST", "/results", blankBody(),
 				)
 
 				handle(resp, req)
