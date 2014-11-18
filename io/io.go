@@ -16,7 +16,7 @@ import (
 
 var dbmap *gorp.DbMap
 
-func InitDb() *gorp.DbMap {
+func InitDb() {
 	databaseUrl := os.Getenv("DATABASE_URL")
 	if databaseUrl == "" {
 		databaseUrl = "mysql2://gopong:gopong@127.0.0.1:3306/pong_matcher_go_development?reconnect=true"
@@ -28,7 +28,7 @@ func InitDb() *gorp.DbMap {
 	db, err := sql.Open("mysql", formattedUrl(url))
 	checkErr(err, "failed to establish database connection")
 
-	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{"InnoDB", "UTF8"}}
+	dbmap = &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{"InnoDB", "UTF8"}}
 
 	migrations := &migrate.FileMigrationSource{
 		Dir: "db/migrations",
@@ -48,8 +48,6 @@ func InitDb() *gorp.DbMap {
 		SetKeys(true, "Id").
 		ColMap("match_request_uuid").SetUnique(true)
 	dbmap.AddTableWithName(domain.Result{}, "results").SetKeys(true, "Id")
-
-	return dbmap
 }
 
 func CloseDb() {
