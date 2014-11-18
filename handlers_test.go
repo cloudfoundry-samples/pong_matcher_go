@@ -67,7 +67,7 @@ var _ = Describe("Request handlers", func() {
 		nullPersist := func(mr MatchRequest) {}
 		handle := CreateMatchRequestHandler(nullPersist)
 
-		Context("with a valid body", func() {
+		Context("with a well-formed body", func() {
 			It("responds with 200", func() {
 				resp := httptest.NewRecorder()
 				req, err := http.NewRequest(
@@ -124,6 +124,22 @@ var _ = Describe("Request handlers", func() {
 	Describe("posting results of a match", func() {
 		nullPersist := func(r Result) {}
 		handle := ResultsHandler(nullPersist)
+
+		Context("with a well-formed body", func() {
+			It("responds with 201", func() {
+				resp := httptest.NewRecorder()
+				req, err := http.NewRequest(
+					"POST",
+					"/results",
+					strings.NewReader(`{"some": "json"}`),
+				)
+
+				handle(resp, req)
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp.Code).To(Equal(201))
+			})
+		})
 
 		Context("without a body", func() {
 			It("responds with 400", func() {
