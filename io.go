@@ -56,7 +56,7 @@ func getMatch(uuid string) (bool, Match) {
 	}
 }
 
-func persistResult(result Result) {
+func persistResult(result Result) error {
 	winningParticipantId, err := dbmap.SelectInt(
 		`SELECT id
 		FROM participants
@@ -67,7 +67,9 @@ func persistResult(result Result) {
 			"player_id": result.Winner,
 		},
 	)
-	checkErr(err, "Error selecting winner")
+	if err != nil {
+		return err
+	}
 	result.WinningParticipantId = winningParticipantId
 
 	losingParticipantId, err := dbmap.SelectInt(
@@ -80,10 +82,12 @@ func persistResult(result Result) {
 			"player_id": result.Loser,
 		},
 	)
-	checkErr(err, "Error selecting loser")
+	if err != nil {
+		return err
+	}
 	result.LosingParticipantId = losingParticipantId
 
-	dbmap.Insert(&result)
+	return dbmap.Insert(&result)
 }
 
 func persistMatchRequest(matchRequest MatchRequest) error {
@@ -92,14 +96,14 @@ func persistMatchRequest(matchRequest MatchRequest) error {
 		return err
 	}
 
-	openMatchRequests := suitableOpponentMatchRequests(dbmap, matchRequest.RequesterId)
+	openMatchRequests, err := suitableOpponentMatchRequests(dbmap, matchRequest.RequesterId)
 	if len(openMatchRequests) > 0 {
 		return recordMatch(dbmap, openMatchRequests[0], matchRequest)
 	}
-	return nil
+	return err
 }
 
-func suitableOpponentMatchRequests(dbmap *gorp.DbMap, requesterId string) []MatchRequest {
+func suitableOpponentMatchRequests(dbmap *gorp.DbMap, requesterId string) ([]MatchRequest, error) {
 	var matchRequests []MatchRequest
 	_, err := dbmap.Select(
 		&matchRequests,
@@ -118,10 +122,7 @@ func suitableOpponentMatchRequests(dbmap *gorp.DbMap, requesterId string) []Matc
 		LIMIT 1`,
 		map[string]string{"requester_id": requesterId},
 	)
-	if err != nil {
-		checkErr(err, "Error selecting match request")
-	}
-	return matchRequests
+	return matchRequests, err
 }
 
 func recordMatch(dbmap *gorp.DbMap, openMatchRequest MatchRequest, newMatchRequest MatchRequest) error {

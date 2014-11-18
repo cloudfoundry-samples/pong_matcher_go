@@ -13,7 +13,7 @@ func AllHandler(w http.ResponseWriter, r *http.Request) {
 type matchRequestPersister func(MatchRequest) error
 type matchRequestRetriever func(string) (bool, MatchRequest)
 type matchRetriever func(string) (bool, Match)
-type resultPersister func(Result)
+type resultPersister func(Result) error
 
 func CreateMatchRequestHandler(persist matchRequestPersister) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -63,11 +63,14 @@ func ResultsHandler(persist resultPersister) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var result Result
 		decoder := json.NewDecoder(r.Body)
-		if err := decoder.Decode(&result); err == nil {
-			persist(result)
-			w.WriteHeader(201)
-		} else {
+		if err := decoder.Decode(&result); err != nil {
 			w.WriteHeader(400)
+			return
+		}
+		if err := persist(result); err != nil {
+			w.WriteHeader(500)
+		} else {
+			w.WriteHeader(201)
 		}
 	}
 }

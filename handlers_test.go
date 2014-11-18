@@ -139,10 +139,11 @@ var _ = Describe("Request handlers", func() {
 	})
 
 	Describe("posting results of a match", func() {
-		nullPersist := func(r Result) {}
-		handle := ResultsHandler(nullPersist)
+		nullPersist := func(r Result) error { return nil }
 
 		Context("with a well-formed body", func() {
+			handle := ResultsHandler(nullPersist)
+
 			It("responds with 201", func() {
 				resp := httptest.NewRecorder()
 				req, err := http.NewRequest(
@@ -157,6 +158,8 @@ var _ = Describe("Request handlers", func() {
 		})
 
 		Context("without a body", func() {
+			handle := ResultsHandler(nullPersist)
+
 			It("responds with 400", func() {
 				resp := httptest.NewRecorder()
 				req, err := http.NewRequest(
@@ -167,6 +170,25 @@ var _ = Describe("Request handlers", func() {
 
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.Code).To(Equal(400))
+			})
+		})
+
+		Context("when persistence produces an error", func() {
+			errorPersist := func(r Result) error {
+				return errors.New("Bad stuff")
+			}
+			handle := ResultsHandler(errorPersist)
+
+			It("responds with 500", func() {
+				resp := httptest.NewRecorder()
+				req, err := http.NewRequest(
+					"POST", "/results", wellFormedJson(),
+				)
+
+				handle(resp, req)
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp.Code).To(Equal(500))
 			})
 		})
 	})
