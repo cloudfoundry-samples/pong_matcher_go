@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 	"github.com/gorilla/mux"
-	"pong_matcher_go/io"
 	"log"
 	"net/http"
 	"os"
+	"pong_matcher_go/io"
 )
 
 func main() {
@@ -19,10 +19,7 @@ func main() {
 		HandleFunc("/all", AllHandler(io.DeleteAll)).
 		Methods("DELETE")
 	router.
-		HandleFunc(
-		"/match_requests/{uuid}",
-		CreateMatchRequestHandler(io.PersistMatchRequest),
-	).
+		HandleFunc("/match_requests/{uuid}", CreateMatchRequestHandler(io.PersistMatchRequest)).
 		Methods("PUT")
 	router.
 		HandleFunc("/match_requests/{uuid}", GetMatchRequestHandler(io.GetMatchRequest)).
