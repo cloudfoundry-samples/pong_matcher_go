@@ -13,10 +13,10 @@ import (
 	"strings"
 )
 
-func stubbedMatchRequestRetrieval(success bool) func(string) (bool, MatchRequest) {
-	return func(uuid string) (bool, MatchRequest) {
+func stubbedMatchRequestRetrieval(success bool) MatchRequestRetriever {
+	return func(uuid string) (bool, MatchRequest, error) {
 		mr := MatchRequest{}
-		return success, mr
+		return success, mr, nil
 	}
 }
 
@@ -61,6 +61,26 @@ var _ = Describe("Request handlers", func() {
 
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.Code).To(Equal(404))
+			})
+		})
+
+		Context("when selecting the match request produces an error", func() {
+			errorFetch := func(uuid string) (bool, MatchRequest, error) {
+				return false, MatchRequest{}, errors.New("Bad stuff")
+			}
+
+			handle := GetMatchRequestHandler(errorFetch)
+
+			It("responds with 500", func() {
+				resp := httptest.NewRecorder()
+				req, err := http.NewRequest(
+					"GET", "/match_requests/foo", nil,
+				)
+
+				handle(resp, req)
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp.Code).To(Equal(500))
 			})
 		})
 	})

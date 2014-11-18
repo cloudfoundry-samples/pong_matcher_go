@@ -16,27 +16,32 @@ func deleteAll() error {
 	return dbmap.TruncateTables()
 }
 
-func getMatchRequest(uuid string) (bool, MatchRequest) {
+func getMatchRequest(uuid string) (bool, MatchRequest, error) {
 	matchRequest := MatchRequest{}
-	err := dbmap.SelectOne(
+	if err := dbmap.SelectOne(
 		&matchRequest,
 		"SELECT * FROM match_requests WHERE uuid = ?", uuid,
-	)
-	if err == nil {
-		matchId, err := dbmap.SelectStr(
-			`SELECT match_id
-			FROM participants
-			WHERE match_request_uuid = ?
-			AND match_id NOT IN (SELECT match_id FROM results)`,
-			uuid,
-		)
-		if err == nil && matchId != "" {
-			matchRequest.MatchId = null.StringFrom(matchId)
-		}
-		return true, matchRequest
-	} else {
-		return false, matchRequest
+	); err != nil {
+		return false, matchRequest, err
 	}
+
+	matchId, err := dbmap.SelectStr(
+		`SELECT match_id
+		FROM participants
+		WHERE match_request_uuid = ?
+		AND match_id NOT IN (SELECT match_id FROM results)`,
+		uuid,
+	)
+
+	if err != nil {
+		return false, matchRequest, err
+	}
+
+	if matchId != "" {
+		matchRequest.MatchId = null.StringFrom(matchId)
+	}
+
+	return true, matchRequest, nil
 }
 
 func getMatch(uuid string) (bool, Match) {

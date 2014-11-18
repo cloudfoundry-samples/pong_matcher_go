@@ -7,7 +7,7 @@ import (
 )
 
 type matchRequestPersister func(MatchRequest) error
-type matchRequestRetriever func(string) (bool, MatchRequest)
+type MatchRequestRetriever func(string) (bool, MatchRequest, error)
 type matchRetriever func(string) (bool, Match)
 type resultPersister func(Result) error
 type wiper func() error
@@ -38,9 +38,16 @@ func CreateMatchRequestHandler(persist matchRequestPersister) http.HandlerFunc {
 	}
 }
 
-func GetMatchRequestHandler(retrieve matchRequestRetriever) http.HandlerFunc {
+func GetMatchRequestHandler(retrieve MatchRequestRetriever) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if found, matchRequest := retrieve(mux.Vars(r)["uuid"]); found {
+		found, matchRequest, err := retrieve(mux.Vars(r)["uuid"])
+
+		if err != nil {
+			w.WriteHeader(500)
+			return
+		}
+
+		if found {
 			js, err := json.Marshal(matchRequest)
 			checkErr(err, "Error writing JSON")
 
