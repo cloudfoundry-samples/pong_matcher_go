@@ -64,7 +64,7 @@ func GetMatchRequest(uuid string) (bool, domain.MatchRequest, error) {
 		&matchRequest,
 		"SELECT * FROM match_requests WHERE uuid = ?", uuid,
 	); err != nil {
-		return false, matchRequest, err
+		return false, matchRequest, nil
 	}
 
 	matchId, err := dbmap.SelectStr(
@@ -76,7 +76,7 @@ func GetMatchRequest(uuid string) (bool, domain.MatchRequest, error) {
 	)
 
 	if err != nil {
-		return false, matchRequest, err
+		return false, matchRequest, nil
 	}
 
 	if matchId != "" {
