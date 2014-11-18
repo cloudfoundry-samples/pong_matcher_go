@@ -11,6 +11,7 @@ func AllHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type matchRequestPersister func(MatchRequest)
+type matchRequestRetriever func(string) (bool, MatchRequest)
 
 func CreateMatchRequestHandler(persist matchRequestPersister) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -31,16 +32,18 @@ func CreateMatchRequestHandler(persist matchRequestPersister) http.HandlerFunc {
 	}
 }
 
-func GetMatchRequestHandler(w http.ResponseWriter, r *http.Request) {
-	if found, matchRequest := getMatchRequest(mux.Vars(r)["uuid"]); found {
-		js, err := json.Marshal(matchRequest)
-		checkErr(err, "Error writing JSON")
+func GetMatchRequestHandler(retrieve matchRequestRetriever) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if found, matchRequest := retrieve(mux.Vars(r)["uuid"]); found {
+			js, err := json.Marshal(matchRequest)
+			checkErr(err, "Error writing JSON")
 
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(200)
-		w.Write(js)
-	} else {
-		w.WriteHeader(404)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(200)
+			w.Write(js)
+		} else {
+			w.WriteHeader(404)
+		}
 	}
 }
 

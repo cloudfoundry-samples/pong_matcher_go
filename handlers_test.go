@@ -11,11 +11,35 @@ import (
 )
 
 var _ = Describe("Request handlers", func() {
-	Describe("CreateMatchRequestHandler", func() {
-		var nullPersist = func(mr MatchRequest) {}
-		var handle = CreateMatchRequestHandler(nullPersist)
+	Describe("GetMatchRequestHandler", func() {
+		Context("when a match request is found", func() {
+			stubRetrieve := func(uuid string) (bool, MatchRequest) {
+				mr := MatchRequest{}
+				return true, mr
+			}
+			handle := GetMatchRequestHandler(stubRetrieve)
 
-		Describe("with a valid body", func() {
+			It("responds with 200", func() {
+				resp := httptest.NewRecorder()
+				req, err := http.NewRequest(
+					"GET",
+					"/match_requests/foo",
+					nil,
+				)
+
+				handle(resp, req)
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp.Code).To(Equal(200))
+			})
+		})
+	})
+
+	Describe("CreateMatchRequestHandler", func() {
+		nullPersist := func(mr MatchRequest) {}
+		handle := CreateMatchRequestHandler(nullPersist)
+
+		Context("with a valid body", func() {
 			It("responds with 200", func() {
 				resp := httptest.NewRecorder()
 				req, err := http.NewRequest(
@@ -31,7 +55,7 @@ var _ = Describe("Request handlers", func() {
 			})
 		})
 
-		Describe("without a body", func() {
+		Context("without a body", func() {
 			It("responds with 400", func() {
 				resp := httptest.NewRecorder()
 				req, err := http.NewRequest(

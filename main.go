@@ -26,7 +26,7 @@ func main() {
 		).
 		Methods("PUT")
 	router.
-		HandleFunc("/match_requests/{uuid}", GetMatchRequestHandler).
+		HandleFunc("/match_requests/{uuid}", GetMatchRequestHandler(getMatchRequest)).
 		Methods("GET")
 	router.
 		HandleFunc("/matches/{uuid}", MatchHandler).
