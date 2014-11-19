@@ -9,7 +9,7 @@ import (
 
 type matchRequestPersister func(domain.MatchRequest) error
 type MatchRequestRetriever func(string) (bool, domain.MatchRequest, error)
-type matchRetriever func(string) (bool, domain.Match)
+type MatchRetriever func(string) (bool, domain.Match)
 type resultPersister func(domain.Result) error
 type wiper func() error
 
@@ -64,7 +64,7 @@ func GetMatchRequestHandler(retrieve MatchRequestRetriever) http.HandlerFunc {
 	}
 }
 
-func MatchHandler(retrieve matchRetriever) http.HandlerFunc {
+func MatchHandler(retrieve MatchRetriever) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if found, match := retrieve(mux.Vars(r)["uuid"]); found {
 			js, err := json.Marshal(match)

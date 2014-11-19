@@ -21,7 +21,7 @@ func stubbedMatchRequestRetrieval(success bool) MatchRequestRetriever {
 	}
 }
 
-func stubbedMatchRetrieval(success bool) func(string) (bool, Match) {
+func stubbedMatchRetrieval(success bool) MatchRetriever {
 	return func(uuid string) (bool, Match) {
 		m := Match{}
 		return success, m
