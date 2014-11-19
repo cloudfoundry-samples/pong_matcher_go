@@ -7,13 +7,13 @@ import (
 	"pong_matcher_go/domain"
 )
 
-type matchRequestPersister func(domain.MatchRequest) error
+type MatchRequestPersister func(domain.MatchRequest) error
 type MatchRequestRetriever func(string) (bool, domain.MatchRequest, error)
 type MatchRetriever func(string) (bool, domain.Match)
-type resultPersister func(domain.Result) error
-type wiper func() error
+type ResultPersister func(domain.Result) error
+type Wiper func() error
 
-func AllHandler(wipe wiper) http.HandlerFunc {
+func AllHandler(wipe Wiper) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := wipe(); err != nil {
 			w.WriteHeader(500)
@@ -21,7 +21,7 @@ func AllHandler(wipe wiper) http.HandlerFunc {
 	}
 }
 
-func CreateMatchRequestHandler(persist matchRequestPersister) http.HandlerFunc {
+func CreateMatchRequestHandler(persist MatchRequestPersister) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var matchRequest domain.MatchRequest
 		decoder := json.NewDecoder(r.Body)
@@ -75,7 +75,7 @@ func MatchHandler(retrieve MatchRetriever) http.HandlerFunc {
 	}
 }
 
-func ResultsHandler(persist resultPersister) http.HandlerFunc {
+func ResultsHandler(persist ResultPersister) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var result domain.Result
 		decoder := json.NewDecoder(r.Body)
