@@ -42,7 +42,7 @@ Now follow the [interaction instructions](#interaction-instructions).
 ## Running locally
 
 The following assumes you have a working, recent version of Go installed, and
-that you've cloned this repo into your $GOPATH/src/ directory
+you have a properly set-up Go workspace.
 
 Install and start MySQL:
 
@@ -64,6 +64,8 @@ exit
 Install and start the application server:
 
 ```bash
+go get github.com/camelpunch/pong_matcher_go
+cd ~/go/src/github.com/camelpunch/pong_matcher_go
 go install
 pong_matcher_go
 ```
