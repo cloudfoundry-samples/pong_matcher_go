@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"net/http"
-	"pong_matcher_go/domain"
+
+	"github.com/camelpunch/pong_matcher_go/domain"
 )
 
 type MatchRequestPersister func(domain.MatchRequest) error

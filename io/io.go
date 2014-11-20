@@ -11,7 +11,8 @@ import (
 	"log"
 	"net/url"
 	"os"
-	"pong_matcher_go/domain"
+
+	"github.com/camelpunch/pong_matcher_go/domain"
 )
 
 var dbmap *gorp.DbMap

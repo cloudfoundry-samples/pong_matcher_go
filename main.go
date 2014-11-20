@@ -6,7 +6,8 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"pong_matcher_go/io"
+
+	"github.com/camelpunch/pong_matcher_go/io"
 )
 
 func main() {
