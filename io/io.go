@@ -17,7 +17,20 @@ import (
 
 var dbmap *gorp.DbMap
 
-func InitDb() {
+func InitDb(newDbMap *gorp.DbMap) {
+	dbmap = newDbMap
+	dbmap.AddTableWithName(domain.MatchRequest{}, "match_requests").SetKeys(true, "Id")
+	dbmap.AddTableWithName(domain.Participant{}, "participants").
+		SetKeys(true, "Id").
+		ColMap("match_request_uuid").SetUnique(true)
+	dbmap.AddTableWithName(domain.Result{}, "results").SetKeys(true, "Id")
+}
+
+func CloseDb() {
+	dbmap.Db.Close()
+}
+
+func MigratedDbMap() *gorp.DbMap {
 	databaseUrl := os.Getenv("DATABASE_URL")
 	if databaseUrl == "" {
 		databaseUrl = "mysql2://gopong:gopong@127.0.0.1:3306/pong_matcher_go_development?reconnect=true"
@@ -30,10 +43,10 @@ func InitDb() {
 
 	db, err := sql.Open("mysql", formattedUrl(url))
 	if err != nil {
-		log.Fatalln("failed to establish database connection", err)
+		log.Fatalln("Failed to establish database connection", err)
 	}
 
-	dbmap = &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{"InnoDB", "UTF8"}}
+	mysqldbmap := &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{"InnoDB", "UTF8"}}
 
 	migrations := &migrate.FileMigrationSource{
 		Dir: "db/migrations",
@@ -46,19 +59,13 @@ func InitDb() {
 	if err != nil {
 		log.Fatalln("Couldn't migrate the database!", err)
 	}
-
-	dbmap.AddTableWithName(domain.MatchRequest{}, "match_requests").SetKeys(true, "Id")
-	dbmap.AddTableWithName(domain.Participant{}, "participants").
-		SetKeys(true, "Id").
-		ColMap("match_request_uuid").SetUnique(true)
-	dbmap.AddTableWithName(domain.Result{}, "results").SetKeys(true, "Id")
-}
-
-func CloseDb() {
-	dbmap.Db.Close()
+	return mysqldbmap
 }
 
 func DeleteAll() error {
+	if dbmap == nil {
+		log.Fatalln("Call InitDb() first!")
+	}
 	return dbmap.TruncateTables()
 }
 
@@ -99,6 +106,10 @@ func GetMatch(uuid string) (bool, domain.Match) {
 	)
 	if err != nil {
 		log.Fatalln("Error getting participants", err)
+	}
+
+	if len(participants) == 0 {
+		return false, domain.Match{}
 	}
 
 	return true, domain.Match{

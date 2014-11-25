@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	io.InitDb()
+	io.InitDb(io.MigratedDbMap())
 	defer io.CloseDb()
 
 	router := mux.NewRouter()
