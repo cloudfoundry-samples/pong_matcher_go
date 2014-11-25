@@ -24,10 +24,14 @@ func InitDb() {
 	}
 
 	url, err := url.Parse(databaseUrl)
-	checkErr(err, "Error parsing DATABASE_URL")
+	if err != nil {
+		log.Fatalln("Error parsing DATABASE_URL", err)
+	}
 
 	db, err := sql.Open("mysql", formattedUrl(url))
-	checkErr(err, "failed to establish database connection")
+	if err != nil {
+		log.Fatalln("failed to establish database connection", err)
+	}
 
 	dbmap = &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{"InnoDB", "UTF8"}}
 
@@ -39,10 +43,9 @@ func InitDb() {
 	if n > 0 {
 		fmt.Printf("Successfully ran %v migrations\n", n)
 	}
-	checkErr(
-		err,
-		"Couldn't migrate the database!",
-	)
+	if err != nil {
+		log.Fatalln("Couldn't migrate the database!", err)
+	}
 
 	dbmap.AddTableWithName(domain.MatchRequest{}, "match_requests").SetKeys(true, "Id")
 	dbmap.AddTableWithName(domain.Participant{}, "participants").
@@ -94,7 +97,9 @@ func GetMatch(uuid string) (bool, domain.Match) {
 		`SELECT * FROM participants WHERE match_id = ?`,
 		uuid,
 	)
-	checkErr(err, "Error getting participants")
+	if err != nil {
+		log.Fatalln("Error getting participants", err)
+	}
 
 	return true, domain.Match{
 		Id:              uuid,
@@ -201,10 +206,4 @@ func formattedUrl(url *url.URL) string {
 		url.Host,
 		url.Path,
 	)
-}
-
-func checkErr(err error, msg string) {
-	if err != nil {
-		log.Fatalln(msg, err)
-	}
 }

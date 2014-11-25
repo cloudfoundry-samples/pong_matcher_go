@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"github.com/gorilla/mux"
+	"log"
 	"net/http"
 
 	"github.com/camelpunch/pong_matcher_go/domain"
@@ -54,7 +55,9 @@ func GetMatchRequestHandler(retrieve MatchRequestRetriever) http.HandlerFunc {
 
 		if found {
 			js, err := json.Marshal(matchRequest)
-			checkErr(err, "Error writing JSON")
+			if err != nil {
+				log.Fatalln("Error writing JSON:", err)
+			}
 
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(200)
@@ -69,7 +72,9 @@ func MatchHandler(retrieve MatchRetriever) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if found, match := retrieve(mux.Vars(r)["uuid"]); found {
 			js, err := json.Marshal(match)
-			checkErr(err, "Error writing JSON")
+			if err != nil {
+				log.Fatalln("Error writing JSON:", err)
+			}
 			w.WriteHeader(200)
 			w.Write(js)
 		}
