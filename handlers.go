@@ -77,6 +77,8 @@ func MatchHandler(retrieve MatchRetriever) http.HandlerFunc {
 			}
 			w.WriteHeader(200)
 			w.Write(js)
+		} else {
+			w.WriteHeader(404)
 		}
 	}
 }

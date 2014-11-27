@@ -157,6 +157,21 @@ var _ = Describe("Request handlers", func() {
 			})
 		})
 
+		Context("when a match is not found", func() {
+			It("responds with 404", func() {
+				handle := MatchHandler(stubbedMatchRetrieval(false))
+
+				resp := httptest.NewRecorder()
+				req, err := http.NewRequest(
+					"GET", "/matches/foo", nil,
+				)
+
+				handle(resp, req)
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp.Code).To(Equal(404))
+			})
+		})
 	})
 
 	Describe("posting results of a match", func() {
