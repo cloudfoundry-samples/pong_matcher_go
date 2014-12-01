@@ -11,7 +11,12 @@ import (
 )
 
 func main() {
-	io.InitDb(io.MigratedDbMap())
+	databaseUrl := os.Getenv("DATABASE_URL")
+	if databaseUrl == "" {
+		databaseUrl = "mysql2://gopong:gopong@127.0.0.1:3306/pong_matcher_go_development?reconnect=true"
+	}
+
+	io.InitDb(io.MigratedDbMap(databaseUrl, "db/migrations"))
 	defer io.CloseDb()
 
 	router := mux.NewRouter()

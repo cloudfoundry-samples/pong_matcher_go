@@ -30,6 +30,4 @@ type Result struct {
 	MatchId              string `json:"match_id" db:"match_id"`
 	Winner               string `json:"winner" db:"winner"`
 	Loser                string `json:"loser" db:"loser"`
-	WinningParticipantId int64  `db:"winning_participant_id"`
-	LosingParticipantId  int64  `db:"losing_participant_id"`
 }

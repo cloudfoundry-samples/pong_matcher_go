@@ -10,7 +10,6 @@ import (
 	"gopkg.in/guregu/null.v2"
 	"log"
 	"net/url"
-	"os"
 
 	"github.com/camelpunch/pong_matcher_go/domain"
 )
@@ -30,12 +29,7 @@ func CloseDb() {
 	dbmap.Db.Close()
 }
 
-func MigratedDbMap() *gorp.DbMap {
-	databaseUrl := os.Getenv("DATABASE_URL")
-	if databaseUrl == "" {
-		databaseUrl = "mysql2://gopong:gopong@127.0.0.1:3306/pong_matcher_go_development?reconnect=true"
-	}
-
+func MigratedDbMap(databaseUrl string, migrationDir string) *gorp.DbMap {
 	url, err := url.Parse(databaseUrl)
 	if err != nil {
 		log.Fatalln("Error parsing DATABASE_URL", err)
@@ -49,7 +43,7 @@ func MigratedDbMap() *gorp.DbMap {
 	mysqldbmap := &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{"InnoDB", "UTF8"}}
 
 	migrations := &migrate.FileMigrationSource{
-		Dir: "db/migrations",
+		Dir: migrationDir,
 	}
 	n, err := migrate.Exec(db, "mysql", migrations, migrate.Up)
 
@@ -120,36 +114,6 @@ func GetMatch(uuid string) (bool, domain.Match) {
 }
 
 func PersistResult(result domain.Result) error {
-	winningParticipantId, err := dbmap.SelectInt(
-		`SELECT id
-		FROM participants
-		WHERE match_id = :match_id
-		AND player_id = :player_id`,
-		map[string]string{
-			"match_id":  result.MatchId,
-			"player_id": result.Winner,
-		},
-	)
-	if err != nil {
-		return err
-	}
-	result.WinningParticipantId = winningParticipantId
-
-	losingParticipantId, err := dbmap.SelectInt(
-		`SELECT id
-		FROM participants
-		WHERE match_id = :match_id
-		AND player_id = :player_id`,
-		map[string]string{
-			"match_id":  result.MatchId,
-			"player_id": result.Loser,
-		},
-	)
-	if err != nil {
-		return err
-	}
-	result.LosingParticipantId = losingParticipantId
-
 	return dbmap.Insert(&result)
 }
 

@@ -4,8 +4,6 @@ CREATE TABLE `results` (
     `match_id` varchar(255) DEFAULT NULL,
     `winner` varchar(255) DEFAULT NULL,
     `loser` varchar(255) DEFAULT NULL,
-    `winning_participant_id` bigint(20) DEFAULT NULL,
-    `losing_participant_id` bigint(20) DEFAULT NULL,
     PRIMARY KEY (`id`)
 );
 

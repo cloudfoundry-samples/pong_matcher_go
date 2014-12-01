@@ -3,10 +3,6 @@ package io_test
 import (
 	. "github.com/camelpunch/pong_matcher_go/io"
 
-	"database/sql"
-	"github.com/coopernurse/gorp"
-	"log"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -23,14 +19,6 @@ var _ = BeforeSuite(func() {
 })
 
 func createTestDb() {
-	db, err := sql.Open("mysql", "gopong:gopong@tcp(127.0.0.1:3306)/pong_matcher_go_test")
-	if err != nil {
-		log.Fatalln("Failed to connect to test database:", err)
-	}
-	testDbMap := &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{"InnoDB", "UTF8"}}
-	InitDb(testDbMap)
-	err = testDbMap.CreateTablesIfNotExists()
-	if err != nil {
-		log.Fatalln("Failed to create tables:", err)
-	}
+	databaseUrl := "mysql2://gopong:gopong@127.0.0.1:3306/pong_matcher_go_test"
+	InitDb(MigratedDbMap(databaseUrl, "../db/migrations"))
 }
