@@ -9,12 +9,12 @@ import (
 )
 
 var _ = Describe("IO:", func() {
+	BeforeEach(func() {
+		DeleteAll()
+	})
+
 	Describe("getting a match", func() {
 		Context("with an empty database", func() {
-			BeforeEach(func() {
-				DeleteAll()
-			})
-
 			It("informs the caller that no match was found", func() {
 				success, _ := GetMatch("nonexistentUUID")
 				Expect(success).To(Equal(false))
