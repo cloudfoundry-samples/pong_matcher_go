@@ -27,5 +27,22 @@ var _ = Describe("IO:", func() {
 			err := PersistResult(Result{})
 			Expect(err).To(BeNil())
 		})
+
+		It("removes match_id from match request (pending rename of match_id)", func() {
+			err := PersistMatchRequest(MatchRequest{Uuid: "foo", RequesterId: "andrew"})
+			Expect(err).To(BeNil())
+
+			err = PersistMatchRequest(MatchRequest{Uuid: "bar", RequesterId: "india"})
+			Expect(err).To(BeNil())
+
+			_, matchRequest, err := GetMatchRequest("foo")
+
+			err = PersistResult(Result{MatchId: matchRequest.MatchId.String})
+			Expect(err).To(BeNil())
+
+			_, matchRequest, err = GetMatchRequest("foo")
+			Expect(err).To(BeNil())
+			Expect(matchRequest.MatchId.Valid).To(BeFalse())
+		})
 	})
 })
