@@ -1,8 +1,8 @@
 package io_test
 
 import (
-	. "github.com/camelpunch/pong_matcher_go/io"
-	. "github.com/camelpunch/pong_matcher_go/domain"
+	. "github.com/cloudfoundry-samples/pong_matcher_go/io"
+	. "github.com/cloudfoundry-samples/pong_matcher_go/domain"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
