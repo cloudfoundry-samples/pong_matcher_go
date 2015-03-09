@@ -64,8 +64,8 @@ exit
 Install and start the application server:
 
 ```bash
-go get github.com/camelpunch/pong_matcher_go
-cd ~/go/src/github.com/camelpunch/pong_matcher_go
+go get github.com/cloudfoundry-samples/pong_matcher_go
+cd ~/go/src/github.com/cloudfoundry-samples/pong_matcher_go
 go install
 pong_matcher_go
 ```
