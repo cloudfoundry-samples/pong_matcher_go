@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/camelpunch/pong_matcher_go/domain"
+	"github.com/cloudfoundry-samples/pong_matcher_go/domain"
 )
 
 type MatchRequestPersister func(domain.MatchRequest) error
