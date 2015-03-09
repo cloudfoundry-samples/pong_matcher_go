@@ -126,5 +126,5 @@ Future requests with different player IDs should not cause a match with someone
 who has already played. The program is not yet useful enough to
 allow pairs who've already played to play again.
 
-[acceptance-test]:https://github.com/camelpunch/pong_matcher_acceptance
+[acceptance-test]:https://github.com/cloudfoundry-samples/pong_matcher_acceptance
 [pws]:https://run.pivotal.io
