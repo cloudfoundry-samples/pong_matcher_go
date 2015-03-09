@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/camelpunch/pong_matcher_go/io"
+	"github.com/cloudfoundry-samples/pong_matcher_go/io"
 )
 
 func main() {
