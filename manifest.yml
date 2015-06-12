@@ -3,7 +3,7 @@ applications:
   - name: gopong
     memory: 256M
     instances: 1
-    buildpack: https://github.com/cloudfoundry/buildpack-go.git
+    buildpack: https://github.com/cloudfoundry/buildpack-go.git#7a5365c62d82cea05d8687c26467f0b9a0deea84
     services:
       - mysql
 
