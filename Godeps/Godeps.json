@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/camelpunch/pong_matcher_go",
+	"ImportPath": "github.com/cloudfoundry-samples/pong_matcher_go",
 	"GoVersion": "go1.3.1",
 	"Deps": [
 		{
