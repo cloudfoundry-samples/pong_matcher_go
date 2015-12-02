@@ -44,33 +44,43 @@ Now follow the [interaction instructions](#interaction-instructions).
 The following assumes you have a working, recent version of Go installed, and
 you have a properly set-up Go workspace.
 
-Install and start MySQL:
+The minimum required set-up for a Go workspace is a directory structured as shown below:
 
-```bash
-brew install mysql
-mysql.server start
-mysql -u root
+```
+|-<Go-workspace-name>
+	|-src
+	|-bin
+	|-pkg
 ```
 
-Create a database user and table in the MySQL REPL you just opened:
+Also, ensure that you set your GOPATH environment variable using your workspace name: `export GOPATH=$HOME/.../<Go-workspace-name>`.
 
-```sql
-CREATE USER 'gopong'@'localhost' IDENTIFIED BY 'gopong';
-CREATE DATABASE pong_matcher_go_development;
-GRANT ALL ON pong_matcher_go_development.* TO 'gopong'@'localhost';
-exit
-```
+1. Install and start MySQL:
 
-Install and start the application server:
+    ```bash
+    brew install mysql
+    mysql.server start
+    mysql -u root
+    ```
 
-```bash
-go get github.com/cloudfoundry-samples/pong_matcher_go
-cd ~/go/src/github.com/cloudfoundry-samples/pong_matcher_go
-go install
-pong_matcher_go
-```
+1. Create a database user and table in the MySQL REPL you just opened:
 
-Export the test host
+    ```sql
+    CREATE USER 'gopong'@'localhost' IDENTIFIED BY 'gopong';
+    CREATE DATABASE pong_matcher_go_development;
+    GRANT ALL ON pong_matcher_go_development.* TO 'gopong'@'localhost';
+    exit
+    ```
+1. Install and start the application server:
+
+    ```bash
+    go get github.com/cloudfoundry-samples/pong_matcher_go
+    cd $GOPATH/src/github.com/cloudfoundry-samples/pong_matcher_go
+    go install
+    $GOPATH/bin/pong_matcher_go
+    ```
+
+1. Export the test host in another shell, where you can then run the interactions:
 
 ```bash
 export HOST=http://localhost:3000
