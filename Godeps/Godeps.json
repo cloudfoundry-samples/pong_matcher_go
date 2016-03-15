@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/cloudfoundry-samples/pong_matcher_go",
-	"GoVersion": "go1.5.1",
+	"GoVersion": "go1.5",
 	"Deps": [
 		{
 			"ImportPath": "github.com/coopernurse/gorp",
